@@ -950,37 +950,162 @@
             font-family: 'Noto Serif SC', serif;
         }
 
-        /* ===== 历史日历 ===== */
-        .history-calendar {
+        /* ===== 日历（复盘页顶部） ===== */
+        .review-calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
+            gap: 5px;
+            margin-bottom: 8px;
         }
-
-        .calendar-day {
+        .review-calendar-day {
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Noto Serif SC', serif;
             background: var(--parchment);
             border: 1px solid var(--border-parchment);
-            border-radius: 10px;
-            font-size: 0.85rem;
+            border-radius: 8px;
             cursor: pointer;
-            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+            color: var(--ink-muted);
         }
-
-        .calendar-day.today {
+        .review-calendar-day:active {
+            transform: scale(0.92);
+        }
+        .review-calendar-day.weekday {
+            font-size: 0.65rem;
+            color: var(--ink-muted);
+            background: transparent;
+            border: none;
+            cursor: default;
+            aspect-ratio: auto;
+            padding: 4px 0;
+        }
+        .review-calendar-day.has-record {
+            border-color: var(--gold-accent);
+            border-width: 2px;
+        }
+        .review-calendar-day.today {
             background: var(--gold-accent);
             color: var(--parchment-light);
             border-color: var(--gold-accent);
         }
-
-        .calendar-day.has-record {
-            border-width: 2px;
-            border-color: var(--gold-accent);
+        .review-calendar-day.selected {
+            background: var(--forest-green);
+            color: var(--parchment-light);
+            border-color: var(--forest-green);
+        }
+        .review-calendar-day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+        .review-calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .review-calendar-nav span {
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+            font-size: 0.95rem;
+        }
+        .review-calendar-nav button {
+            background: none;
+            border: 1px solid var(--border-parchment);
+            border-radius: 6px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 0.85rem;
+            color: var(--ink-dark);
         }
 
+        /* ===== 合并日期卡片 ===== */
+        .day-record-card {
+            background: var(--parchment);
+            border: 1px solid var(--border-parchment);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px var(--shadow-ink);
+        }
+        .day-record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .day-record-date {
+            font-weight: 600;
+            color: var(--gold-accent);
+            font-family: 'Noto Serif SC', serif;
+        }
+        .day-record-badge {
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 10px;
+            background: var(--forest-green);
+            color: var(--parchment-light);
+        }
+        .day-record-habits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .day-record-habit {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .day-record-habit.good {
+            background: rgba(90, 122, 74, 0.15);
+            color: var(--forest-green);
+        }
+        .day-record-habit.bad {
+            background: rgba(181, 90, 74, 0.12);
+            color: #8B4A3A;
+        }
+        .day-record-habit.care {
+            background: rgba(122, 156, 156, 0.15);
+            color: var(--water-blue);
+        }
+        .day-record-grass {
+            font-size: 0.8rem;
+            font-family: 'Noto Serif SC', serif;
+            padding: 4px 0 8px;
+            color: var(--ink-muted);
+        }
+        .day-record-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--ink-dark);
+            font-family: 'Noto Serif SC', serif;
+            border-top: 1px solid rgba(212, 201, 181, 0.4);
+            padding-top: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .day-record-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .day-record-actions button {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-parchment);
+            font-family: 'Noto Serif SC', serif;
+            cursor: pointer;
+            font-size: 0.8rem;
+            background: var(--parchment);
+        }
+
+        /* ===== 卡片历史项（旧，兼容） ===== */
         .history-item {
             background: var(--parchment);
             border: 1px solid var(--border-parchment);
@@ -989,14 +1114,12 @@
             margin-bottom: 12px;
             box-shadow: 0 2px 8px var(--shadow-ink);
         }
-
         .history-date {
             font-weight: 600;
             margin-bottom: 10px;
             color: var(--gold-accent);
             font-family: 'Noto Serif SC', serif;
         }
-
         .history-content {
             font-size: 0.95rem;
             color: var(--ink-dark);
@@ -1568,11 +1691,23 @@
         </div>
     </div>
 
-    <!-- 每日复盘页 -->
+    <!-- 每日复盘页（日历 + 合并打卡与复盘） -->
     <div id="review-page" class="page">
-        <h2 class="page-title">每日复盘</h2>
+        <h2 class="page-title">复盘与打卡</h2>
 
+        <!-- 日历 -->
+        <div class="card" style="padding-bottom:12px;">
+            <div class="review-calendar-nav">
+                <button id="cal-prev" onclick="calendarPrev()">‹</button>
+                <span id="cal-month-label"></span>
+                <button id="cal-next" onclick="calendarNext()">›</button>
+            </div>
+            <div class="review-calendar" id="review-calendar"></div>
+        </div>
+
+        <!-- 今日复盘输入 -->
         <div class="card">
+            <div style="font-weight:600;font-family:'Noto Serif SC',serif;margin-bottom:8px;">📝 今日复盘</div>
             <div class="voice-indicator" id="voice-indicator">🎤 正在聆听...</div>
             <textarea class="review-textarea" id="review-text" placeholder="写下今天的想法..."></textarea>
             <div class="review-btns">
@@ -1583,10 +1718,8 @@
             <div class="ai-summary" id="ai-summary" style="display: none;"></div>
         </div>
 
-        <div class="card">
-            <h3 style="margin-bottom: 12px; font-family: 'Noto Serif SC', serif;">历史记录</h3>
-            <div id="review-history"></div>
-        </div>
+        <!-- 合并日期记录 -->
+        <div id="merged-records"></div>
     </div>
 
     <!-- 自我之镜页 -->
@@ -1597,17 +1730,6 @@
             <div id="mirror-tree"></div>
             <button class="mirror-btn gold" style="width:100%;margin-top:12px;" onclick="addMirrorNode(1)">+ 添加根节点分支</button>
         </div>
-    </div>
-
-    <!-- 历史记录页 -->
-    <div id="history-page" class="page">
-        <h2 class="page-title">打卡历史</h2>
-
-        <div class="card">
-            <div class="history-calendar" id="history-calendar"></div>
-        </div>
-
-        <div id="history-list"></div>
     </div>
 
     <!-- 设置/备份页 -->
@@ -1665,9 +1787,6 @@
         </button>
         <button class="nav-btn" onclick="switchPage('mirror')">
             🪞<span>自我</span>
-        </button>
-        <button class="nav-btn" onclick="switchPage('history')">
-            📅<span>历史</span>
         </button>
         <button class="nav-btn" onclick="switchPage('settings')">
             ⚙️<span>设置</span>
@@ -1794,7 +1913,6 @@
         function init() {
             loadState();
             renderAll();
-            renderCalendar();
             renderMirrorTree();
             updateStats();
             initParticles();
@@ -1870,8 +1988,7 @@
             document.getElementById(pageName + '-page').classList.add('active');
             event.currentTarget.classList.add('active');
             if (pageName === 'habit') { updateStats(); renderHabitChart(state.currentChartPeriod || 'day'); }
-            if (pageName === 'review') { console.log('复盘数据:', JSON.stringify(state.reviews.slice(0,3))); renderReviewHistory(); }
-            if (pageName === 'history') renderHistoryList();
+            if (pageName === 'review') { renderReviewCalendar(); renderMergedRecords(); }
             if (pageName === 'settings') renderDataDiagnostic();
         }
 
@@ -2371,6 +2488,184 @@
             event.currentTarget.classList.add('selected');
         }
 
+        // ===== 复盘日历 =====
+        let calendarYear = new Date().getFullYear();
+        let calendarMonth = new Date().getMonth() + 1;
+        let selectedDate = null;
+
+        function renderReviewCalendar() {
+            const container = document.getElementById('review-calendar');
+            const label = document.getElementById('cal-month-label');
+            if (!container) return;
+
+            const year = calendarYear;
+            const month = calendarMonth;
+            label.textContent = `${year}年${month}月`;
+
+            const firstDay = new Date(year, month - 1, 1).getDay();
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const today = new Date();
+
+            // 收集有数据/复盘记录的日期
+            const hasDataDates = new Set();
+            state.history.forEach(h => hasDataDates.add(h.date));
+            state.reviews.forEach(r => hasDataDates.add(r.date));
+            const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+            if (state.habits.good.length > 0 || state.habits.bad.length > 0 || state.habits.care.length > 0 || state.grass.evaluation) {
+                hasDataDates.add(todayStr);
+            }
+
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            let html = weekdays.map(d => `<div class="review-calendar-day weekday">${d}</div>`).join('');
+
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="review-calendar-day empty"></div>';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}/${month}/${d}`;
+                const isToday = today.getFullYear() === year && today.getMonth() === month - 1 && today.getDate() === d;
+                const isSelected = selectedDate === dateStr;
+                const hasRecord = hasDataDates.has(dateStr);
+
+                let cls = 'review-calendar-day';
+                if (isToday) cls += ' today';
+                if (isSelected) cls += ' selected';
+                if (hasRecord) cls += ' has-record';
+
+                html += `<div class="${cls}" onclick="selectDate('${dateStr}')">${d}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function calendarPrev() {
+            calendarMonth--;
+            if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; }
+            renderReviewCalendar();
+        }
+
+        function calendarNext() {
+            calendarMonth++;
+            if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; }
+            renderReviewCalendar();
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            renderReviewCalendar();
+            const el = document.getElementById('record-' + dateStr.replace(/\//g, '-'));
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.transition = 'box-shadow 0.3s';
+                el.style.boxShadow = '0 0 0 3px var(--gold-accent)';
+                setTimeout(() => { el.style.boxShadow = ''; }, 2000);
+            }
+        }
+
+        function renderMergedRecords() {
+            const container = document.getElementById('merged-records');
+            if (!container) return;
+
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+
+            // 按日期合并所有数据
+            const dateMap = {};
+
+            // 今日临时数据
+            const hasTodayData = state.habits.good.length > 0 || state.habits.bad.length > 0 || state.habits.care.length > 0 || state.grass.evaluation;
+            if (hasTodayData) {
+                dateMap[todayStr] = {
+                    date: todayStr,
+                    habits: { good: [...state.habits.good], bad: [...state.habits.bad], care: [...state.habits.care] },
+                    grass: state.grass.evaluation,
+                    isToday: true,
+                    reviews: []
+                };
+            }
+
+            // 历史打卡数据
+            state.history.forEach(h => {
+                if (!dateMap[h.date]) {
+                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
+                }
+                dateMap[h.date].habits.good.push(...(h.habits.good || []));
+                dateMap[h.date].habits.bad.push(...(h.habits.bad || []));
+                dateMap[h.date].habits.care.push(...(h.habits.care || []));
+                if (h.grass) dateMap[h.date].grass = h.grass;
+            });
+
+            // 复盘文本
+            state.reviews.forEach((review, idx) => {
+                if (!dateMap[review.date]) {
+                    dateMap[review.date] = { date: review.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
+                }
+                dateMap[review.date].reviews.push({ text: review.text, aiSummary: review.aiSummary, idx });
+            });
+
+            const dates = Object.keys(dateMap).sort((a, b) => {
+                const [ay, am, ad] = a.split('/').map(Number);
+                const [by, bm, bd] = b.split('/').map(Number);
+                return by - ay || bm - am || bd - ad;
+            });
+
+            if (dates.length === 0) {
+                container.innerHTML = '<div style="color:var(--ink-muted);text-align:center;padding:30px 0;font-family:\'Noto Serif SC\',serif;">还没有打卡与复盘记录</div>';
+                return;
+            }
+
+            let html = '';
+            dates.forEach(dateStr => {
+                const data = dateMap[dateStr];
+                const isToday = dateStr === todayStr;
+                const id = 'record-' + dateStr.replace(/\//g, '-');
+
+                html += `<div class="day-record-card" id="${id}">
+                    <div class="day-record-header">
+                        <span class="day-record-date">${dateStr}</span>
+                        ${isToday ? '<span class="day-record-badge">今天</span>' : ''}
+                    </div>`;
+
+                const allGood = [...new Set(data.habits.good || [])];
+                const allBad = [...new Set(data.habits.bad || [])];
+                const allCare = [...new Set(data.habits.care || [])];
+
+                if (allGood.length > 0 || allBad.length > 0 || allCare.length > 0) {
+                    html += '<div class="day-record-habits">';
+                    allGood.forEach(h => { html += `<span class="day-record-habit good">🌟 ${h}</span>`; });
+                    allBad.forEach(h => { html += `<span class="day-record-habit bad">⚠️ ${h}</span>`; });
+                    allCare.forEach(h => { html += `<span class="day-record-habit care">💝 ${h}</span>`; });
+                    html += '</div>';
+                }
+
+                if (data.grass) {
+                    const emoji = data.grass === 'good' ? '🌱 不错' : data.grass === 'normal' ? '😐 一般' : '😔 有点糟';
+                    html += `<div class="day-record-grass">📊 草地自评：${emoji}</div>`;
+                }
+
+                data.reviews.forEach(r => {
+                    if (editingReviewIdx === r.idx) {
+                        html += `<textarea class="review-edit-input" id="edit-textarea-${r.idx}">${r.text.replace(/</g, '&lt;')}</textarea>
+                        <div class="review-edit-actions">
+                            <button onclick="confirmEditReview(${r.idx})">保存</button>
+                            <button onclick="cancelEditReview()">取消</button>
+                        </div>`;
+                    } else {
+                        html += `<div class="day-record-text">${r.text.replace(/\n/g, '<br>')}</div>
+                        <div class="day-record-actions">
+                            <button onclick="editReview(${r.idx})">✏️ 编辑</button>
+                            <button onclick="deleteReview(${r.idx})">🗑️ 删除</button>
+                        </div>`;
+                    }
+                });
+
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
         // ===== 每日复盘 =====
         let currentRecognition = null;
 
@@ -2512,112 +2807,42 @@
 
             document.getElementById('review-text').value = '';
             document.getElementById('ai-summary').style.display = 'none';
-            renderReviewHistory();
+            renderMergedRecords();
         }
 
-        // ===== 复盘历史 - 按月归类 + 可编辑 =====
-        let editingReviewIndex = -1;
-
-        function renderReviewHistory() {
-            const container = document.getElementById('review-history');
-            if (state.reviews.length === 0) {
-                container.innerHTML = '<p style="color:var(--ink-muted);text-align:center;font-family:\'Noto Serif SC\',serif;padding:20px 0;">暂无复盘记录</p>';
-                return;
-            }
-
-            // 按月分组
-            const groups = {};
-            state.reviews.forEach((review, idx) => {
-                const parts = review.date.split('/');
-                const monthKey = parts.length >= 2 ? `${parts[0]}/${parts[1]}` : review.date;
-                if (!groups[monthKey]) groups[monthKey] = [];
-                groups[monthKey].push({ ...review, idx });
-            });
-
-            const monthOrder = Object.keys(groups).sort((a, b) => {
-                const [ay, am] = a.split('/').map(Number);
-                const [by, bm] = b.split('/').map(Number);
-                return by - ay || bm - am;
-            });
-
-            let html = '';
-            monthOrder.forEach(monthKey => {
-                const [y, m] = monthKey.split('/');
-                const monthLabel = `${y}年${m}月`;
-                const items = groups[monthKey];
-                html += `<div class="month-group">
-                    <div class="month-header" onclick="toggleMonth(this)">
-                        <span>${monthLabel}</span>
-                        <span style="font-size:0.8rem;color:var(--ink-muted);">${items.length} 条</span>
-                    </div>
-                    <div class="month-body">`;
-                items.forEach(item => {
-                    html += renderReviewItem(item.idx);
-                });
-                html += `</div></div>`;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function renderReviewItem(idx) {
-            const review = state.reviews[idx];
-            if (!review) return '';
-            if (editingReviewIndex === idx) {
-                return `<div class="history-item">
-                    <div class="history-date">${review.date} — 编辑中</div>
-                    <textarea class="review-edit-input" id="edit-textarea">${review.text.replace(/</g, '&lt;')}</textarea>
-                    <div class="review-edit-actions">
-                        <button class="btn btn-primary" style="padding:8px 16px;font-size:0.85rem;" onclick="confirmEditReview(${idx})">保存</button>
-                        <button class="btn" style="padding:8px 16px;font-size:0.85rem;" onclick="cancelEditReview()">取消</button>
-                    </div>
-                </div>`;
-            }
-            return `<div class="history-item">
-                <div class="history-date">${review.date}</div>
-                <div class="history-content">${review.text.replace(/\n/g, '<br>')}</div>
-                <div style="margin-top:8px;display:flex;gap:8px;">
-                    <button class="review-btn" style="padding:4px 12px;font-size:0.8rem;" onclick="editReview(${idx})">✏️ 编辑</button>
-                    <button class="review-btn" style="padding:4px 12px;font-size:0.8rem;background:rgba(180,140,140,0.2);color:#8B5A5A;" onclick="deleteReview(${idx})">🗑️ 删除</button>
-                </div>
-            </div>`;
-        }
-
-        function toggleMonth(header) {
-            const body = header.nextElementSibling;
-            body.classList.toggle('collapsed');
-        }
+        // ===== 复盘编辑 =====
+        let editingReviewIdx = -1;
 
         function editReview(idx) {
-            editingReviewIndex = idx;
-            renderReviewHistory();
+            editingReviewIdx = idx;
+            renderMergedRecords();
             setTimeout(() => {
-                const ta = document.getElementById('edit-textarea');
+                const ta = document.getElementById('edit-textarea-' + idx);
                 if (ta) ta.focus();
             }, 100);
         }
 
         function confirmEditReview(idx) {
-            const textarea = document.getElementById('edit-textarea');
+            const textarea = document.getElementById('edit-textarea-' + idx);
             if (textarea) {
                 state.reviews[idx].text = textarea.value;
                 saveState();
             }
-            editingReviewIndex = -1;
-            renderReviewHistory();
+            editingReviewIdx = -1;
+            renderMergedRecords();
         }
 
         function cancelEditReview() {
-            editingReviewIndex = -1;
-            renderReviewHistory();
+            editingReviewIdx = -1;
+            renderMergedRecords();
         }
 
         function deleteReview(idx) {
             if (confirm('确定删除这条复盘记录吗？')) {
                 state.reviews.splice(idx, 1);
                 saveState();
-                if (editingReviewIndex === idx) editingReviewIndex = -1;
-                renderReviewHistory();
+                if (editingReviewIdx === idx) editingReviewIdx = -1;
+                renderMergedRecords();
             }
         }
 
@@ -2691,55 +2916,6 @@
         }
 
         // ===== 历史记录 =====
-        function renderCalendar() {
-            const calendar = document.getElementById('history-calendar');
-            const today = new Date();
-            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
-
-            let html = '';
-            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
-                html += `<div class="calendar-day" style="background: rgba(212, 201, 181, 0.3); font-size: 0.7rem;">${day}</div>`;
-            });
-
-            for (let i = 0; i < firstDay; i++) {
-                html += '<div class="calendar-day"></div>';
-            }
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const isToday = d === today.getDate();
-                const dateStr = `${today.getFullYear()}/${today.getMonth() + 1}/${d}`;
-                const hasRecord = state.history.some(h => h.date === dateStr);
-
-                html += `<div class="calendar-day ${isToday ? 'today' : ''} ${hasRecord ? 'has-record' : ''}"
-                         onclick="showHistoryDetail('${dateStr}')">${d}</div>`;
-            }
-
-            calendar.innerHTML = html;
-        }
-
-        function renderHistoryList() {
-            const container = document.getElementById('history-list');
-            container.innerHTML = state.history.slice(0, 30).map(record => `
-                <div class="history-item">
-                    <div class="history-date">${record.date}</div>
-                    <div class="history-content">
-                        ${record.habits.good.length > 0 ? `<div>🌟 好习惯：${record.habits.good.join('、')}</div>` : ''}
-                        ${record.habits.bad.length > 0 ? `<div>⚠️ 需注意：${record.habits.bad.join('、')}</div>` : ''}
-                        ${record.habits.care.length > 0 ? `<div>💝 自我关怀：${record.habits.care.join('、')}</div>` : ''}
-                        ${record.grass ? `<div>草地自评：${record.grass === 'good' ? '🌱还不错' : record.grass === 'normal' ? '😐一般' : '😔有点糟'}</div>` : ''}
-                    </div>
-                </div>
-            `).join('') || '<p style="color: var(--ink-muted); text-align: center; font-family: \'Noto Serif SC\', serif;">暂无历史记录</p>';
-        }
-
-        function showHistoryDetail(date) {
-            const record = state.history.find(h => h.date === date);
-            if (record) {
-                alert(`${date}\n好习惯：${record.habits.good.join('、') || '无'}\n需注意：${record.habits.bad.join('、') || '无'}\n自我关怀：${record.habits.care.join('、') || '无'}`);
-            }
-        }
-
         // ===== 习惯统计 - 柱状图 =====
         function getHabitCounts(dateStr) {
             const today = new Date();
@@ -2917,7 +3093,7 @@
             renderWeeds();
             renderTree();
             renderCharacters();
-            renderReviewHistory();
+            renderMergedRecords();
         }
 
         // 启动应用
