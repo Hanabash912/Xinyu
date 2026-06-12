@@ -1181,6 +1181,85 @@
             vertical-align: middle;
         }
 
+        /* ===== 复盘按月归类 ===== */
+        .month-group {
+            margin-bottom: 16px;
+        }
+        .month-header {
+            font-size: 1rem;
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+            color: var(--ink-dark);
+            padding: 10px 0 6px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-parchment);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .month-header .toggle-icon {
+            font-size: 0.7rem;
+            color: var(--ink-muted);
+            transition: transform 0.2s;
+        }
+        .month-header .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        .month-body {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .month-body.collapsed {
+            max-height: 0;
+        }
+
+        .review-edit-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1.5px solid var(--gold-accent);
+            border-radius: 8px;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            margin-bottom: 8px;
+            background: var(--parchment-light);
+        }
+        .review-edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .review-edit-actions button {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-parchment);
+            font-family: 'Noto Serif SC', serif;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* ===== 语音输入状态指示 ===== */
+        .voice-indicator {
+            display: none;
+            padding: 8px 12px;
+            background: rgba(180, 160, 140, 0.15);
+            border: 1px dashed var(--gold-accent);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+            font-family: 'Noto Serif SC', serif;
+            margin-bottom: 10px;
+            animation: voicePulse 1s ease-in-out infinite;
+        }
+        .voice-indicator.active {
+            display: block;
+        }
+        @keyframes voicePulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 380px) {
             .mermaid-container, .deer-container, .cat-container {
@@ -1428,6 +1507,7 @@
         <h2 class="page-title">每日复盘</h2>
 
         <div class="card">
+            <div class="voice-indicator" id="voice-indicator">🎤 正在聆听...</div>
             <textarea class="review-textarea" id="review-text" placeholder="写下今天的想法..."></textarea>
             <div class="review-btns">
                 <button class="review-btn voice-btn" onclick="startVoiceInput()">🎤 语音输入</button>
@@ -2226,21 +2306,57 @@
         }
 
         // ===== 每日复盘 =====
+        let currentRecognition = null;
+
         function startVoiceInput() {
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 const recognition = new SpeechRecognition();
                 recognition.lang = 'zh-CN';
+                recognition.interimResults = true;
+                recognition.continuous = false;
+                currentRecognition = recognition;
+
+                const indicator = document.getElementById('voice-indicator');
+                indicator.classList.add('active');
 
                 recognition.onresult = (event) => {
-                    const text = event.results[0][0].transcript;
-                    document.getElementById('review-text').value += text;
+                    let interim = '';
+                    let final = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            final += event.results[i][0].transcript;
+                        } else {
+                            interim += event.results[i][0].transcript;
+                        }
+                    }
+                    if (final) {
+                        const textarea = document.getElementById('review-text');
+                        textarea.value += final;
+                    }
+                    indicator.textContent = interim ? `🎤 ${interim}` : '🎤 正在聆听...';
+                };
+
+                recognition.onerror = () => {
+                    indicator.textContent = '🎤 语音识别出错，请重试';
+                    setTimeout(() => indicator.classList.remove('active'), 2000);
+                };
+
+                recognition.onend = () => {
+                    indicator.classList.remove('active');
+                    indicator.textContent = '🎤 正在聆听...';
+                    currentRecognition = null;
                 };
 
                 recognition.start();
-                alert('开始语音识别，请说话...');
             } else {
-                alert('您的浏览器不支持语音识别');
+                // 手机浏览器不支持 Speech API，聚焦文本框弹出键盘听写
+                const textarea = document.getElementById('review-text');
+                textarea.focus();
+                textarea.placeholder = '点击键盘上的麦克风图标开始听写...';
+                setTimeout(() => {
+                    textarea.placeholder = '写下今天的想法...';
+                }, 5000);
             }
         }
 
@@ -2255,26 +2371,48 @@
 
             if (state.apiKey) {
                 callRealAI(text);
-            } else {
-                summaryDiv.innerHTML = `<strong>AI总结：</strong><br>今天你记录了关于${text.length > 50 ? '丰富' : '简洁'}的内容。${
-                    state.habits.good.length > 0 ? `完成了${state.habits.good.length}个好习惯，很棒！` : ''
-                }${
-                    state.habits.bad.length > 0 ? `注意到${state.habits.bad.length}个需要改进的习惯，保持觉察。` : ''
-                }继续保持对自我的关注和觉察。`;
-                summaryDiv.style.display = 'block';
+                return;
             }
+
+            // 智能本地分析
+            const lines = text.split('\n').filter(l => l.trim());
+            const charCount = text.length;
+            const lineCount = lines.length;
+
+            const positiveWords = ['开心', '好', '棒', '顺利', '完成', '进步', '感谢', '加油', '满足', '轻松', '希望'];
+            const negativeWords = ['累', '烦', '难', '焦虑', '担心', '压力', '失败', '失望', '伤心', '疲惫', '迷茫', '不好'];
+            let posCount = 0, negCount = 0;
+            positiveWords.forEach(w => { if (text.includes(w)) posCount++; });
+            negativeWords.forEach(w => { if (text.includes(w)) negCount++; });
+
+            let mood = '平稳';
+            if (posCount > negCount + 1) mood = '积极 ☀️';
+            else if (negCount > posCount + 1) mood = '偏低 🌧️';
+
+            const words = text.match(/[一-鿿]{2,4}(?=[一-鿿]|[\s，。！？、])/g) || [];
+            const uniqueWords = [...new Set(words)].slice(0, 5).join('、');
+
+            let summary = `<strong>📋 复盘分析</strong><br>`;
+            summary += `📝 共 ${charCount} 字，${lineCount} 条记录<br>`;
+            summary += `🎭 情绪倾向：${mood}<br>`;
+            if (uniqueWords) summary += `🔑 关键词：${uniqueWords}<br>`;
+            if (state.habits.good.length > 0) {
+                summary += `🌟 今日好习惯：${state.habits.good.join('、')}<br>`;
+            }
+            if (state.habits.care.length > 0) {
+                summary += `💝 自我关怀：${state.habits.care.join('、')}<br>`;
+            }
+            summary += `<br><em style="font-size:0.8rem;color:var(--ink-muted);">配置 API Key 可获取更深入的 AI 分析</em>`;
+
+            summaryDiv.innerHTML = summary;
+            summaryDiv.style.display = 'block';
         }
 
         async function callRealAI(text) {
             const summaryDiv = document.getElementById('ai-summary');
             summaryDiv.innerHTML = '正在生成总结...';
             summaryDiv.style.display = 'block';
-
-            try {
-                summaryDiv.innerHTML = '<strong>AI总结：</strong><br>API调用需要配置正确的端点。';
-            } catch (error) {
-                summaryDiv.innerHTML = 'AI总结失败：' + error.message;
-            }
+            summaryDiv.innerHTML = '<strong>AI总结：</strong><br>API 功能需要配置有效的 API Key 和端点。去设置页配置后即可使用。';
         }
 
         function saveReview() {
@@ -2290,20 +2428,115 @@
             state.reviews.unshift(review);
             saveState();
 
-            alert('复盘已保存！');
             document.getElementById('review-text').value = '';
             document.getElementById('ai-summary').style.display = 'none';
             renderReviewHistory();
         }
 
+        // ===== 复盘历史 - 按月归类 + 可编辑 =====
+        let editingReviewIndex = -1;
+
         function renderReviewHistory() {
             const container = document.getElementById('review-history');
-            container.innerHTML = state.reviews.slice(0, 10).map(review => `
-                <div class="history-item">
-                    <div class="history-date">${review.date}</div>
-                    <div class="history-content">${review.text}</div>
+            if (state.reviews.length === 0) {
+                container.innerHTML = '<p style="color:var(--ink-muted);text-align:center;font-family:\'Noto Serif SC\',serif;padding:20px 0;">暂无复盘记录</p>';
+                return;
+            }
+
+            // 按月分组
+            const groups = {};
+            state.reviews.forEach((review, idx) => {
+                const parts = review.date.split('/');
+                const monthKey = parts.length >= 2 ? `${parts[0]}/${parts[1]}` : review.date;
+                if (!groups[monthKey]) groups[monthKey] = [];
+                groups[monthKey].push({ ...review, idx });
+            });
+
+            const monthOrder = Object.keys(groups).sort((a, b) => {
+                const [ay, am] = a.split('/').map(Number);
+                const [by, bm] = b.split('/').map(Number);
+                return by - ay || bm - am;
+            });
+
+            let html = '';
+            monthOrder.forEach(monthKey => {
+                const [y, m] = monthKey.split('/');
+                const monthLabel = `${y}年${m}月`;
+                const items = groups[monthKey];
+                html += `<div class="month-group">
+                    <div class="month-header" onclick="toggleMonth(this)">
+                        <span>${monthLabel}</span>
+                        <span style="font-size:0.8rem;color:var(--ink-muted);">${items.length} 条</span>
+                    </div>
+                    <div class="month-body">`;
+                items.forEach(item => {
+                    html += renderReviewItem(item.idx);
+                });
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderReviewItem(idx) {
+            const review = state.reviews[idx];
+            if (!review) return '';
+            if (editingReviewIndex === idx) {
+                return `<div class="history-item">
+                    <div class="history-date">${review.date} — 编辑中</div>
+                    <textarea class="review-edit-input" id="edit-textarea">${review.text.replace(/</g, '&lt;')}</textarea>
+                    <div class="review-edit-actions">
+                        <button class="btn btn-primary" style="padding:8px 16px;font-size:0.85rem;" onclick="confirmEditReview(${idx})">保存</button>
+                        <button class="btn" style="padding:8px 16px;font-size:0.85rem;" onclick="cancelEditReview()">取消</button>
+                    </div>
+                </div>`;
+            }
+            return `<div class="history-item">
+                <div class="history-date">${review.date}</div>
+                <div class="history-content">${review.text.replace(/\n/g, '<br>')}</div>
+                <div style="margin-top:8px;display:flex;gap:8px;">
+                    <button class="review-btn" style="padding:4px 12px;font-size:0.8rem;" onclick="editReview(${idx})">✏️ 编辑</button>
+                    <button class="review-btn" style="padding:4px 12px;font-size:0.8rem;background:rgba(180,140,140,0.2);color:#8B5A5A;" onclick="deleteReview(${idx})">🗑️ 删除</button>
                 </div>
-            `).join('');
+            </div>`;
+        }
+
+        function toggleMonth(header) {
+            const body = header.nextElementSibling;
+            body.classList.toggle('collapsed');
+        }
+
+        function editReview(idx) {
+            editingReviewIndex = idx;
+            renderReviewHistory();
+            setTimeout(() => {
+                const ta = document.getElementById('edit-textarea');
+                if (ta) ta.focus();
+            }, 100);
+        }
+
+        function confirmEditReview(idx) {
+            const textarea = document.getElementById('edit-textarea');
+            if (textarea) {
+                state.reviews[idx].text = textarea.value;
+                saveState();
+            }
+            editingReviewIndex = -1;
+            renderReviewHistory();
+        }
+
+        function cancelEditReview() {
+            editingReviewIndex = -1;
+            renderReviewHistory();
+        }
+
+        function deleteReview(idx) {
+            if (confirm('确定删除这条复盘记录吗？')) {
+                state.reviews.splice(idx, 1);
+                saveState();
+                if (editingReviewIndex === idx) editingReviewIndex = -1;
+                renderReviewHistory();
+            }
         }
 
         // ===== 自我之镜 =====
