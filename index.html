@@ -827,60 +827,126 @@
             font-family: 'Noto Serif SC', serif;
         }
 
-        /* ===== 自我之镜 ===== */
-        .mirror-tree {
-            padding-left: 15px;
+        /* ===== 自我之镜（竖屏优化） ===== */
+        .mirror-root-card {
+            background: rgba(184, 145, 68, 0.1);
+            border: 1.5px solid var(--gold-accent);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
         }
 
-        .mirror-node {
-            padding: 12px 0;
-            border-left: 2px dashed var(--border-parchment);
-            padding-left: 18px;
-            margin-left: 8px;
+        .mirror-root-card .mirror-node-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ink-dark);
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 4px;
         }
 
-        .mirror-node-header {
+        .mirror-root-card .mirror-node-actions {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .mirror-node-text {
-            font-size: 1rem;
-            padding: 10px 14px;
-            background: rgba(184, 145, 68, 0.08);
+        .mirror-child-list {
+            padding-left: 0;
+            margin-top: 6px;
+        }
+
+        .mirror-child-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            background: var(--parchment);
+            border: 1px solid var(--border-parchment);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .mirror-child-item::before {
+            content: '';
+            position: absolute;
+            left: -1px;
+            top: 10%;
+            bottom: 10%;
+            width: 3px;
+            background: var(--gold-accent);
+            border-radius: 2px;
+            opacity: 0.4;
+        }
+
+        .mirror-child-item .mirror-node-text {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--ink-dark);
+            font-family: 'Noto Serif SC', serif;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .mirror-child-item .mirror-node-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .mirror-btn {
+            padding: 8px 14px;
             border: 1px solid var(--border-parchment);
             border-radius: 8px;
+            font-size: 0.85rem;
             font-family: 'Noto Serif SC', serif;
-        }
-
-        .mirror-node-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border-parchment);
-            border-radius: 6px;
-            font-size: 0.8rem;
             cursor: pointer;
-            font-family: 'Noto Serif SC', serif;
             background: var(--parchment);
+            min-height: 38px;
+            transition: all 0.2s;
         }
 
-        .mirror-node-btn.edit {
-            background: rgba(122, 156, 156, 0.15);
+        .mirror-btn:active {
+            transform: translateY(2px);
         }
 
-        .mirror-node-btn.delete {
-            background: rgba(232, 213, 213, 0.5);
+        .mirror-btn.gold {
+            background: var(--gold-accent);
+            color: var(--parchment-light);
+            border-color: var(--gold-accent);
         }
 
-        .mirror-add-btn {
-            margin-top: 12px;
-            padding: 10px 16px;
-            background: rgba(184, 145, 68, 0.08);
-            border: 1.5px dashed var(--border-parchment);
-            border-radius: 10px;
-            font-size: 0.9rem;
+        .mirror-btn.small {
+            padding: 6px 12px;
+            min-height: 34px;
+            font-size: 0.8rem;
+        }
+
+        .mirror-btn.danger {
+            background: rgba(180, 140, 140, 0.2);
+            color: #8B5A5A;
+            border-color: rgba(180, 140, 140, 0.3);
+        }
+
+        .mirror-expand-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: var(--gold-accent);
             cursor: pointer;
+            padding: 4px 0;
+            font-family: 'Noto Serif SC', serif;
+            user-select: none;
+        }
+
+        .mirror-empty {
+            color: var(--ink-muted);
+            font-size: 0.85rem;
+            padding: 12px 0;
+            text-align: center;
             font-family: 'Noto Serif SC', serif;
         }
 
@@ -1527,9 +1593,9 @@
     <div id="mirror-page" class="page">
         <h2 class="page-title">自我之镜</h2>
 
-        <div class="card">
-            <div class="mirror-tree" id="mirror-tree"></div>
-            <button class="mirror-add-btn" onclick="addMirrorNode(1)">+ 添加节点</button>
+        <div class="card" style="padding-bottom:8px;">
+            <div id="mirror-tree"></div>
+            <button class="mirror-btn gold" style="width:100%;margin-top:12px;" onclick="addMirrorNode(1)">+ 添加根节点分支</button>
         </div>
     </div>
 
