@@ -1,0 +1,2592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>心域 — 内心是一片草地</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Noto+Serif+SC:wght@400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --parchment: #F5F0E8;
+            --parchment-light: #FAF6EF;
+            --parchment-dark: #E8E0D0;
+            --ink-dark: #2C2416;
+            --ink-muted: #7A7060;
+            --forest-green: #5A7A4A;
+            --forest-light: #8AAC7A;
+            --mist-gray: #C5C8C0;
+            --mist-warm: #D5D0C5;
+            --gold-accent: #B89144;
+            --gold-glow: rgba(184, 145, 68, 0.25);
+            --water-blue: #7A9C9C;
+            --water-light: #A5C0C0;
+            --shadow-ink: rgba(44, 36, 22, 0.12);
+            --border-parchment: #D4C9B5;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Georgia', 'Times New Roman', serif;
+            background: var(--parchment-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--ink-dark);
+        }
+
+        /* ===== 纸张纹理 ===== */
+        .paper-texture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* ===== 主界面 — 草地视图 ===== */
+        .grassland {
+            position: relative;
+            width: 100%;
+            min-height: 65vh;
+            overflow: hidden;
+        }
+
+        .grassland-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .grassland-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+            transition: background 0.8s ease;
+        }
+        .grassland-overlay.good {
+            background: rgba(90, 122, 74, 0.12);
+        }
+        .grassland-overlay.normal {
+            background: transparent;
+        }
+        .grassland-overlay.bad {
+            background: rgba(140, 130, 100, 0.12);
+        }
+
+        /* ===== 指环王风格浓雾效果 ===== */
+        .mist {
+            position: absolute;
+            pointer-events: none;
+            z-index: 20;
+            filter: blur(40px);
+        }
+
+        .mist-layer-1 {
+            top: -5%;
+            left: -5%;
+            width: 60%;
+            height: 50%;
+            background: radial-gradient(ellipse at 20% 30%,
+                rgba(210, 205, 195, 0.5) 0%,
+                rgba(200, 200, 195, 0.2) 40%,
+                transparent 70%);
+            animation: mistDrift1 60s ease-in-out infinite;
+        }
+
+        .mist-layer-2 {
+            bottom: -5%;
+            right: -5%;
+            width: 50%;
+            height: 40%;
+            background: radial-gradient(ellipse at 70% 80%,
+                rgba(205, 200, 195, 0.4) 0%,
+                rgba(195, 200, 200, 0.15) 40%,
+                transparent 70%);
+            filter: blur(60px);
+            animation: mistDrift2 45s ease-in-out infinite;
+        }
+
+        .mist-layer-3 {
+            top: 20%;
+            left: 15%;
+            right: 15%;
+            bottom: 20%;
+            background: radial-gradient(ellipse at 50% 50%,
+                rgba(215, 210, 200, 0.15) 0%,
+                transparent 60%);
+            filter: blur(80px);
+            animation: mistDrift3 30s ease-in-out infinite;
+        }
+
+        @keyframes mistDrift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+            33% { transform: translate(20px, -15px) scale(1.05); opacity: 0.8; }
+            66% { transform: translate(-10px, 10px) scale(0.95); opacity: 0.5; }
+        }
+        @keyframes mistDrift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+            33% { transform: translate(-15px, 10px) scale(0.95); opacity: 0.6; }
+            66% { transform: translate(10px, -5px) scale(1.05); opacity: 0.3; }
+        }
+        @keyframes mistDrift3 {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+        }
+
+        /* ===== 晨光穿透雾气（上帝光） ===== */
+        .god-rays {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60%;
+            height: 70%;
+            background: conic-gradient(from 45deg at 0% 0%,
+                transparent 0deg,
+                rgba(255, 220, 150, 0.12) 15deg,
+                transparent 30deg,
+                rgba(255, 220, 150, 0.06) 50deg,
+                transparent 80deg,
+                rgba(255, 220, 150, 0.08) 100deg,
+                transparent 130deg);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 7;
+            animation: godRaysPulse 12s ease-in-out infinite;
+        }
+
+        @keyframes godRaysPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+
+        /* ===== 晨光粒子（Canvas） ===== */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        /* ===== 阳光光斑 ===== */
+        .sun-spots {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .sun-spot {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sunSpotTwinkle 15s ease-in-out infinite;
+        }
+        .sun-spot.warm {
+            background: radial-gradient(circle, rgba(255, 230, 180, 0.25) 0%, transparent 70%);
+        }
+        .sun-spot.cool {
+            background: radial-gradient(circle, rgba(220, 230, 240, 0.2) 0%, transparent 70%);
+        }
+
+        .sun-spot:nth-child(1) { width: 120px; height: 120px; top: 15%; right: 20%; animation-delay: 0s; }
+        .sun-spot:nth-child(2) { width: 80px; height: 80px; top: 55%; left: 50%; animation-delay: 3s; }
+        .sun-spot:nth-child(3) { width: 100px; height: 100px; top: 40%; right: 10%; animation-delay: 7s; }
+        .sun-spot:nth-child(4) { width: 60px; height: 60px; top: 70%; left: 20%; animation-delay: 5s; }
+        .sun-spot:nth-child(5) { width: 90px; height: 90px; top: 25%; left: 10%; animation-delay: 10s; }
+
+        @keyframes sunSpotTwinkle {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(1.15); }
+        }
+
+        /* ===== 湖面水纹 ===== */
+        .lake-ripples {
+            position: absolute;
+            top: 5%;
+            left: 3%;
+            width: 50%;
+            height: 28%;
+            z-index: 4;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .lake-ripple {
+            position: absolute;
+            border: 1.5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: rippleMove 8s ease-in-out infinite;
+        }
+
+        .lake-ripple::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05), transparent);
+        }
+
+        .lake-ripple:nth-child(1) { width: 40%; height: 50%; top: 25%; left: 20%; animation-delay: 0s; }
+        .lake-ripple:nth-child(2) { width: 30%; height: 40%; top: 35%; left: 45%; animation-delay: 2.5s; }
+        .lake-ripple:nth-child(3) { width: 25%; height: 35%; top: 15%; left: 35%; animation-delay: 5s; }
+
+        @keyframes rippleMove {
+            0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.3; }
+            50% { transform: scale(1.08) translate(2px, 2px); opacity: 0.55; }
+        }
+
+        /* ===== 角色基础 ===== */
+        .character {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s ease-out, filter 0.3s ease;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(44, 36, 22, 0.15));
+        }
+
+        .character:active {
+            transform: scale(1.05);
+        }
+
+        .character-glow {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120%;
+            height: 15px;
+            background: radial-gradient(ellipse, rgba(245, 240, 232, 0.35) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .character-shadow {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 20px;
+            background: radial-gradient(ellipse, rgba(100, 130, 120, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* ===== 人鱼 ===== */
+        .mermaid-container {
+            top: 12%;
+            left: 28%;
+            width: 70px;
+            height: 80px;
+            animation: characterFloat 5s ease-in-out infinite;
+        }
+
+        .mermaid-container.hidden {
+            opacity: 0.2;
+            filter: grayscale(0.5) drop-shadow(0 4px 8px rgba(44, 36, 22, 0.15));
+        }
+
+        .mermaid-container.visible {
+            opacity: 1;
+            filter: drop-shadow(0 4px 8px rgba(44, 36, 22, 0.15));
+        }
+
+        /* ===== 百合花 ===== */
+        .lily-container {
+            top: 25%;
+            left: 3%;
+            width: 45px;
+            height: 60px;
+            animation: characterFloat 4s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        /* ===== 树 ===== */
+        .tree-container {
+            position: absolute;
+            bottom: 3%;
+            left: 2%;
+            width: 100px;
+            height: 140px;
+            z-index: 8;
+            cursor: pointer;
+        }
+
+        .tree-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===== 黑猫 ===== */
+        .cat-container {
+            bottom: 8%;
+            right: 5%;
+            width: 55px;
+            height: 65px;
+            animation: characterFloat 4.5s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        .cat-container.agitated {
+            animation: catAgitated 0.5s ease-in-out infinite;
+        }
+
+        @keyframes catAgitated {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        /* ===== 梅花鹿 ===== */
+        .deer-container {
+            bottom: 30%;
+            right: 12%;
+            left: auto;
+            width: 70px;
+            height: 80px;
+            animation: characterFloat 5s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes characterFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* ===== 杂草 ===== */
+        .weeds-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .weed {
+            position: absolute;
+            animation: weedSway 3s ease-in-out infinite;
+        }
+
+        .weed.yellow { filter: brightness(1.3) saturate(0.6); }
+        .weed.wilted { filter: grayscale(0.7) brightness(0.8); }
+
+        @keyframes weedSway {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        .grass-blades {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            z-index: 6;
+        }
+
+        /* ===== 底部导航 — 毛玻璃 ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(245, 240, 232, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 0 env(safe-area-inset-bottom, 6px) 0;
+            z-index: 100;
+            border-top: 1px solid var(--border-parchment);
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            min-width: 50px;
+            min-height: 44px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .nav-btn span {
+            font-size: 0.6rem;
+            margin-top: 2px;
+            color: var(--ink-muted);
+            font-family: 'Noto Serif SC', serif;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-btn.active {
+            color: var(--gold-accent);
+        }
+
+        .nav-btn.active span {
+            color: var(--gold-accent);
+        }
+
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background: var(--gold-accent);
+            border-radius: 1px;
+            box-shadow: 0 0 6px var(--gold-glow);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ===== 页面容器 ===== */
+        .page {
+            display: none;
+            padding: 15px;
+            padding-bottom: 80px;
+            background: linear-gradient(180deg,
+                rgba(197, 200, 192, 0.5) 0%,
+                var(--parchment) 25%,
+                var(--parchment-light) 100%);
+            min-height: 100vh;
+        }
+
+        .page.active {
+            display: block;
+            animation: pageFadeIn 0.45s ease-out;
+        }
+
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 18px;
+            color: var(--ink-dark);
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-parchment);
+        }
+
+        /* ===== 羊皮纸风格卡片 ===== */
+        .card {
+            background: var(--parchment);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-parchment);
+            box-shadow: 0 2px 12px var(--shadow-ink);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: -3px;
+            bottom: -3px;
+            border: 1px solid rgba(212, 201, 181, 0.25);
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ===== 任务输入 ===== */
+        .task-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Noto Serif SC', serif;
+            background: var(--parchment-light);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .task-input:focus {
+            border-color: var(--gold-accent);
+            box-shadow: 0 0 0 3px var(--gold-glow);
+        }
+
+        .task-input::placeholder {
+            color: var(--ink-muted);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Noto Serif SC', serif;
+            cursor: pointer;
+            min-width: 50px;
+            min-height: 48px;
+            transition: all 0.2s;
+            background: var(--parchment);
+            color: var(--ink-dark);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        .btn-primary {
+            background: var(--forest-green);
+            color: var(--parchment-light);
+            border-color: var(--forest-green);
+        }
+
+        .btn-secondary {
+            background: var(--water-blue);
+            color: var(--parchment-light);
+            border-color: var(--water-blue);
+        }
+
+        /* ===== 任务列表 ===== */
+        .task-list {
+            margin-top: 15px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 0;
+            gap: 12px;
+            border-bottom: 1px solid rgba(212, 201, 181, 0.4);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-type {
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .task-type:active {
+            transform: scale(1.2);
+        }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--forest-green);
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 1rem;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .task-text.completed {
+            color: var(--ink-muted);
+            text-decoration: line-through;
+            text-decoration-style: wavy;
+            text-decoration-color: var(--border-parchment);
+        }
+
+        .task-delete {
+            padding: 6px 12px;
+            background: rgba(180, 140, 140, 0.2);
+            color: #8B5A5A;
+            border: 1px solid rgba(180, 140, 140, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* ===== 习惯模块 ===== */
+        .habit-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .habit-count {
+            background: var(--gold-accent);
+            color: var(--parchment-light);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .habit-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .habit-tag {
+            padding: 10px 14px;
+            background: var(--parchment);
+            border: 1.5px solid var(--border-parchment);
+            color: var(--ink-dark);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+            min-height: 40px;
+        }
+
+        .habit-tag:active {
+            transform: translateY(2px);
+            border-color: var(--gold-accent);
+        }
+
+        .habit-tag.selected {
+            background: var(--forest-green);
+            color: var(--parchment-light);
+            border-color: var(--forest-green);
+        }
+
+        .bad-habit-tag {
+            background: rgba(232, 213, 213, 0.5);
+            border-color: rgba(200, 160, 160, 0.5);
+        }
+
+        .bad-habit-tag:active {
+            background: rgba(232, 213, 213, 0.8);
+            border-color: rgba(200, 160, 160, 0.8);
+        }
+
+        .care-tag {
+            background: var(--parchment-light);
+            border-color: var(--water-light);
+        }
+
+        .care-tag:active {
+            border-color: var(--water-blue);
+        }
+
+        .custom-habit-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .custom-habit-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: 'Noto Serif SC', serif;
+            background: var(--parchment-light);
+        }
+
+        /* ===== 草地自评 ===== */
+        .eval-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 12px;
+        }
+
+        .eval-btn {
+            padding: 18px 28px;
+            border: 2px solid var(--border-parchment);
+            border-radius: 14px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            background: var(--parchment);
+            min-width: 85px;
+            min-height: 65px;
+            transition: all 0.2s;
+        }
+
+        .eval-btn:active {
+            transform: translateY(3px);
+        }
+
+        .eval-btn.selected {
+            background: var(--forest-green);
+            border-color: var(--forest-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(90, 122, 74, 0.3);
+        }
+
+        /* ===== 复盘区域 ===== */
+        .review-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 14px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Noto Serif SC', serif;
+            resize: vertical;
+            margin-bottom: 12px;
+            background: var(--parchment-light);
+            line-height: 1.8;
+        }
+
+        .review-textarea:focus {
+            outline: none;
+            border-color: var(--gold-accent);
+        }
+
+        .review-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .review-btn {
+            padding: 12px 16px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            background: var(--parchment);
+            transition: all 0.2s;
+        }
+
+        .review-btn:active {
+            transform: translateY(2px);
+        }
+
+        .voice-btn {
+            background: rgba(245, 230, 211, 0.5);
+            border-color: rgba(224, 201, 179, 0.7);
+        }
+
+        .ai-btn {
+            background: rgba(232, 224, 240, 0.5);
+            border-color: rgba(208, 192, 224, 0.7);
+        }
+
+        .ai-summary {
+            margin-top: 15px;
+            padding: 14px;
+            background: rgba(232, 224, 240, 0.3);
+            border: 1px solid rgba(208, 192, 224, 0.5);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* ===== 自我之镜 ===== */
+        .mirror-tree {
+            padding-left: 15px;
+        }
+
+        .mirror-node {
+            padding: 12px 0;
+            border-left: 2px dashed var(--border-parchment);
+            padding-left: 18px;
+            margin-left: 8px;
+        }
+
+        .mirror-node-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mirror-node-text {
+            font-size: 1rem;
+            padding: 10px 14px;
+            background: rgba(184, 145, 68, 0.08);
+            border: 1px solid var(--border-parchment);
+            border-radius: 8px;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .mirror-node-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-parchment);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            background: var(--parchment);
+        }
+
+        .mirror-node-btn.edit {
+            background: rgba(122, 156, 156, 0.15);
+        }
+
+        .mirror-node-btn.delete {
+            background: rgba(232, 213, 213, 0.5);
+        }
+
+        .mirror-add-btn {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: rgba(184, 145, 68, 0.08);
+            border: 1.5px dashed var(--border-parchment);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* ===== 历史日历 ===== */
+        .history-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--parchment);
+            border: 1px solid var(--border-parchment);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .calendar-day.today {
+            background: var(--gold-accent);
+            color: var(--parchment-light);
+            border-color: var(--gold-accent);
+        }
+
+        .calendar-day.has-record {
+            border-width: 2px;
+            border-color: var(--gold-accent);
+        }
+
+        .history-item {
+            background: var(--parchment);
+            border: 1px solid var(--border-parchment);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px var(--shadow-ink);
+        }
+
+        .history-date {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--gold-accent);
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .history-content {
+            font-size: 0.95rem;
+            color: var(--ink-dark);
+            line-height: 1.7;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* ===== 统计 ===== */
+        .stats-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stats-tab {
+            padding: 10px 18px;
+            border: 1.5px solid var(--border-parchment);
+            background: var(--parchment);
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+        }
+
+        .stats-tab.active {
+            background: var(--forest-green);
+            color: var(--parchment-light);
+            border-color: var(--forest-green);
+        }
+
+        .stats-numbers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 18px 10px;
+            background: rgba(184, 145, 68, 0.08);
+            border: 1px solid var(--border-parchment);
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--gold-accent);
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--ink-muted);
+            margin-top: 5px;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* ===== 备份 ===== */
+        .backup-btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1.5px solid var(--border-parchment);
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            min-height: 54px;
+            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+            background: var(--parchment);
+        }
+
+        .backup-btn:active {
+            transform: translateY(2px);
+        }
+
+        .export-btn {
+            background: rgba(122, 156, 156, 0.15);
+            border-color: var(--water-blue);
+        }
+
+        .import-btn {
+            background: rgba(245, 230, 211, 0.5);
+            border-color: rgba(224, 201, 179, 0.7);
+        }
+
+        /* ===== 模态框 ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 36, 22, 0.4);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--parchment);
+            border: 1px solid var(--border-parchment);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 340px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(44, 36, 22, 0.2);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 18px;
+            font-family: 'Cinzel Decorative', 'Noto Serif SC', serif;
+            color: var(--ink-dark);
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--ink-muted);
+        }
+
+        .branch-option {
+            padding: 14px;
+            background: rgba(184, 145, 68, 0.06);
+            border: 1px solid var(--border-parchment);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+        }
+
+        .branch-option:active {
+            background: rgba(184, 145, 68, 0.15);
+            transform: translateX(3px);
+        }
+
+        .grow-type-btn {
+            padding: 14px;
+            margin: 6px 0;
+            background: var(--forest-green);
+            color: var(--parchment-light);
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .grow-type-btn:active {
+            transform: translateY(2px);
+        }
+
+        /* ===== 角色提示 ===== */
+        .character-tooltip {
+            position: fixed;
+            background: var(--parchment);
+            border: 1.5px solid var(--border-parchment);
+            color: var(--ink-dark);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            z-index: 150;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Noto Serif SC', serif;
+            box-shadow: 0 4px 16px var(--shadow-ink);
+        }
+
+        .character-tooltip.show {
+            opacity: 1;
+        }
+
+        #import-input {
+            display: none;
+        }
+
+        /* ===== 习惯柱状图 ===== */
+        .habit-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            min-height: 150px;
+            padding: 15px 0 5px 0;
+            overflow-x: auto;
+        }
+        .chart-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            min-width: 36px;
+        }
+        .chart-bars {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+        }
+        .chart-bar {
+            width: 12px;
+            border-radius: 3px 3px 0 0;
+            min-height: 2px;
+            transition: height 0.4s ease;
+        }
+        .chart-bar.good { background: var(--forest-green); }
+        .chart-bar.bad { background: #B55A4A; }
+        .chart-label {
+            font-size: 0.6rem;
+            color: var(--ink-muted);
+            font-family: 'Noto Serif SC', serif;
+            white-space: nowrap;
+        }
+        .chart-legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            font-family: 'Noto Serif SC', serif;
+            color: var(--ink-muted);
+        }
+        .chart-legend-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 380px) {
+            .mermaid-container, .deer-container, .cat-container {
+                transform: scale(0.85);
+            }
+            .page-title {
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mist-layer-1, .mist-layer-2 {
+                filter: blur(30px);
+            }
+            .mist-layer-3 {
+                display: none;
+            }
+            .god-rays {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="paper-texture"></div>
+
+    <!-- 主界面 — 草地视图 -->
+    <div id="main-page" class="page active">
+        <div class="grassland" id="grassland">
+            <!-- 背景视频 -->
+            <video class="grassland-video" autoplay loop muted playsinline>
+                <source src="image/kling_20260611_作品_中土世界清晨草地竖屏_5910_0.mp4" type="video/mp4">
+            </video>
+            <!-- 草地状态覆盖层 -->
+            <div class="grassland-overlay" id="grassland-overlay"></div>
+
+            <!-- 浓雾（3 层径向 + blur） -->
+            <div class="mist mist-layer-1"></div>
+            <div class="mist mist-layer-2"></div>
+            <div class="mist mist-layer-3"></div>
+
+            <!-- 上帝光晨光 -->
+            <div class="god-rays"></div>
+
+            <!-- 晨光粒子 Canvas -->
+            <canvas id="particle-canvas"></canvas>
+
+            <!-- 晨光光斑 -->
+            <div class="sun-spots">
+                <div class="sun-spot warm"></div>
+                <div class="sun-spot cool"></div>
+                <div class="sun-spot warm"></div>
+                <div class="sun-spot cool"></div>
+                <div class="sun-spot warm"></div>
+            </div>
+
+            <!-- 湖面水纹 -->
+            <div class="lake-ripples">
+                <div class="lake-ripple"></div>
+                <div class="lake-ripple"></div>
+                <div class="lake-ripple"></div>
+            </div>
+
+            <!-- 人鱼 -->
+            <div class="character mermaid-container hidden" id="mermaid" onclick="interactMermaid()">
+                <div class="character-glow"></div>
+                <img src="image/人鱼2.png" alt="人鱼" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+            </div>
+
+            <!-- 百合花 SVG -->
+            <div class="character lily-container" id="lily" onclick="interactLily()">
+                <div class="character-glow"></div>
+                <svg viewBox="0 0 50 70" width="50" height="70" id="lily-svg">
+                    <ellipse cx="25" cy="68" rx="15" ry="3" fill="rgba(100,130,120,0.2)"/>
+                    <path d="M25 65 Q23 50 25 35" fill="none" stroke="#5E8E5E" stroke-width="2"/>
+                    <path d="M25 55 Q15 50 12 55 Q18 52 25 55" fill="#6E9E6E" stroke="#5E8E5E" stroke-width="0.5"/>
+                    <path d="M25 50 Q35 45 38 50 Q32 47 25 50" fill="#6E9E6E" stroke="#5E8E5E" stroke-width="0.5"/>
+                    <g id="lily-petals">
+                        <ellipse cx="25" cy="22" rx="8" ry="14" fill="white" stroke="#E8E0E0" stroke-width="0.5" transform="rotate(-15 25 22)"/>
+                        <ellipse cx="25" cy="22" rx="8" ry="14" fill="white" stroke="#E8E0E0" stroke-width="0.5" transform="rotate(15 25 22)"/>
+                        <ellipse cx="25" cy="22" rx="7" ry="13" fill="white" stroke="#E8E0E0" stroke-width="0.5" transform="rotate(0 25 22)"/>
+                    </g>
+                    <ellipse cx="25" cy="28" rx="4" ry="3" fill="#E8D870"/>
+                </svg>
+            </div>
+
+            <!-- 树 SVG -->
+            <div class="tree-container" id="tree-area" onclick="showTreeModal()">
+                <svg class="tree-svg" viewBox="0 0 100 140">
+                    <ellipse cx="50" cy="135" rx="35" ry="5" fill="rgba(100,130,120,0.2)"/>
+                    <path d="M45 130 Q42 100 45 70 Q50 50 55 70 Q58 100 55 130" fill="#6E5E4E" stroke="#5E4E3E" stroke-width="1"/>
+                    <path d="M48 80 Q35 70 30 65" fill="none" stroke="#6E5E4E" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M52 60 Q65 50 72 48" fill="none" stroke="#6E5E4E" stroke-width="3" stroke-linecap="round"/>
+                    <g id="tree-crown-svg">
+                        <ellipse cx="50" cy="45" rx="35" ry="30" fill="#7EB57E" stroke="#5E9E5E" stroke-width="1"/>
+                        <ellipse cx="35" cy="50" rx="20" ry="18" fill="#8EC58E"/>
+                        <ellipse cx="65" cy="48" rx="22" ry="20" fill="#8EC58E"/>
+                        <ellipse cx="50" cy="35" rx="25" ry="20" fill="#9ED59E"/>
+                    </g>
+                    <g id="tree-leaves"></g>
+                </svg>
+            </div>
+
+            <!-- 黑猫 SVG -->
+            <div class="character cat-container" id="black-cat" onclick="interactCat()">
+                <div class="character-glow"></div>
+                <svg viewBox="0 0 60 70" width="60" height="70">
+                    <ellipse cx="30" cy="68" rx="20" ry="4" fill="rgba(100,130,120,0.2)"/>
+                    <path d="M50 45 Q60 35 55 25" fill="none" stroke="#3A3A3A" stroke-width="5" stroke-linecap="round"/>
+                    <ellipse cx="30" cy="50" rx="22" ry="18" fill="#4A4A4A" stroke="#3A3A3A" stroke-width="1"/>
+                    <ellipse cx="30" cy="30" rx="16" ry="14" fill="#4A4A4A" stroke="#3A3A3A" stroke-width="1"/>
+                    <path d="M18 22 L14 10 L24 18" fill="#4A4A4A" stroke="#3A3A3A" stroke-width="1"/>
+                    <path d="M42 22 L46 10 L36 18" fill="#4A4A4A" stroke="#3A3A3A" stroke-width="1"/>
+                    <path d="M18 20 L16 13 L22 18" fill="#7A6A5A"/>
+                    <path d="M42 20 L44 13 L38 18" fill="#7A6A5A"/>
+                    <ellipse cx="24" cy="28" rx="4" ry="5" fill="#E8D870"/>
+                    <ellipse cx="36" cy="28" rx="4" ry="5" fill="#E8D870"/>
+                    <ellipse cx="24" cy="28" rx="1.5" ry="3" fill="#2A2A2A"/>
+                    <ellipse cx="36" cy="28" rx="1.5" ry="3" fill="#2A2A2A"/>
+                    <circle cx="25" cy="26" r="1" fill="white"/>
+                    <circle cx="37" cy="26" r="1" fill="white"/>
+                    <ellipse cx="30" cy="33" rx="2" ry="1.5" fill="#7A6A5A"/>
+                    <path d="M20 32 L10 30" stroke="#7A7A7A" stroke-width="0.5"/>
+                    <path d="M20 34 L10 35" stroke="#7A7A7A" stroke-width="0.5"/>
+                    <path d="M40 32 L50 30" stroke="#7A7A7A" stroke-width="0.5"/>
+                    <path d="M40 34 L50 35" stroke="#7A7A7A" stroke-width="0.5"/>
+                </svg>
+            </div>
+
+            <!-- 梅花鹿 SVG -->
+            <div class="character deer-container" id="deer" onclick="interactDeer()">
+                <div class="character-glow"></div>
+                <svg viewBox="0 0 80 90" width="80" height="90">
+                    <ellipse cx="40" cy="88" rx="25" ry="3" fill="rgba(100,130,120,0.2)"/>
+                    <rect x="28" y="60" width="5" height="28" rx="2" fill="#A0856A"/>
+                    <rect x="48" y="60" width="5" height="28" rx="2" fill="#A0856A"/>
+                    <rect x="35" y="62" width="4" height="25" rx="2" fill="#B0957A"/>
+                    <rect x="42" y="62" width="4" height="25" rx="2" fill="#B0957A"/>
+                    <ellipse cx="40" cy="55" rx="25" ry="18" fill="#B0957A" stroke="#A0856A" stroke-width="1"/>
+                    <circle cx="30" cy="50" r="2" fill="#D5C5B5"/>
+                    <circle cx="35" cy="58" r="2" fill="#D5C5B5"/>
+                    <circle cx="45" cy="52" r="2" fill="#D5C5B5"/>
+                    <circle cx="50" cy="58" r="1.5" fill="#D5C5B5"/>
+                    <ellipse cx="65" cy="50" rx="5" ry="4" fill="#D5C5B5"/>
+                    <path d="M35 45 Q30 35 32 25" fill="none" stroke="#B0957A" stroke-width="12" stroke-linecap="round"/>
+                    <ellipse cx="32" cy="22" rx="12" ry="10" fill="#B0957A" stroke="#A0856A" stroke-width="1"/>
+                    <ellipse cx="24" cy="14" rx="4" ry="7" fill="#B0957A" stroke="#A0856A" stroke-width="0.5" transform="rotate(-20 24 14)"/>
+                    <ellipse cx="40" cy="14" rx="4" ry="7" fill="#B0957A" stroke="#A0856A" stroke-width="0.5" transform="rotate(20 40 14)"/>
+                    <ellipse cx="24" cy="14" rx="2" ry="4" fill="#D5B5A5" transform="rotate(-20 24 14)"/>
+                    <ellipse cx="40" cy="14" rx="2" ry="4" fill="#D5B5A5" transform="rotate(20 40 14)"/>
+                    <path d="M26 12 Q22 5 18 2" fill="none" stroke="#7E6E5E" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M22 8 Q18 6 16 8" fill="none" stroke="#7E6E5E" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M38 12 Q42 5 46 2" fill="none" stroke="#7E6E5E" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M42 8 Q46 6 48 8" fill="none" stroke="#7E6E5E" stroke-width="1.5" stroke-linecap="round"/>
+                    <ellipse cx="28" cy="20" rx="2" ry="2.5" fill="#3A3A3A"/>
+                    <ellipse cx="36" cy="20" rx="2" ry="2.5" fill="#3A3A3A"/>
+                    <circle cx="29" cy="19" r="0.8" fill="white"/>
+                    <circle cx="37" cy="19" r="0.8" fill="white"/>
+                    <ellipse cx="32" cy="26" rx="2" ry="1.5" fill="#5A4A3A"/>
+                </svg>
+            </div>
+
+            <!-- 杂草容器 -->
+            <div class="weeds-container" id="weeds-container"></div>
+        </div>
+
+        <!-- 任务输入区 -->
+        <div class="card">
+            <div class="task-input-row">
+                <input type="text" class="task-input" id="task-input" placeholder="添加任务...">
+                <button class="btn btn-primary" onclick="addTask()">+</button>
+            </div>
+            <div class="task-list" id="task-list"></div>
+        </div>
+
+        <!-- 草地自评 -->
+        <div class="card">
+            <div style="font-weight: 600; text-align: center; font-family: 'Noto Serif SC', serif;">今日草地自评</div>
+            <div class="eval-options">
+                <button class="eval-btn" onclick="evaluateGrass('good')">🌱</button>
+                <button class="eval-btn" onclick="evaluateGrass('normal')">😐</button>
+                <button class="eval-btn" onclick="evaluateGrass('bad')">😔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 习惯记录页 -->
+    <div id="habit-page" class="page">
+        <h2 class="page-title">习惯记录</h2>
+
+        <div class="card">
+            <div class="habit-section-title">🌟 今日好习惯<span class="habit-count" id="good-habit-count">0</span></div>
+            <div class="habit-tags" id="good-habit-tags"></div>
+            <div class="habit-tags" id="habit-suggestions" style="margin-top:8px;"></div>
+            <div class="custom-habit-input" style="margin-top:8px;">
+                <input type="text" id="custom-good-habit" placeholder="自定义好习惯...">
+                <button class="btn" onclick="addCustomGoodHabit()">+</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="habit-section-title">⚠️ 今日坏习惯</div>
+            <div class="habit-tags" id="bad-habit-tags">
+                <span class="habit-tag bad-habit-tag" onclick="addBadHabit('熬夜')">熬夜</span>
+                <span class="habit-tag bad-habit-tag" onclick="addBadHabit('久坐')">久坐</span>
+                <span class="habit-tag bad-habit-tag" onclick="addBadHabit('拖延')">拖延</span>
+                <span class="habit-tag bad-habit-tag" onclick="addBadHabit('吃垃圾食品')">吃垃圾食品</span>
+                <span class="habit-tag bad-habit-tag" onclick="addBadHabit('刷手机超时')">刷手机超时</span>
+            </div>
+            <div class="custom-habit-input">
+                <input type="text" id="custom-bad-habit" placeholder="自定义坏习惯...">
+                <button class="btn" onclick="addCustomBadHabit()">+</button>
+            </div>
+            <div id="bad-habit-list" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="habit-section-title">💝 今日自我关怀</div>
+            <div class="habit-tags" id="care-tags">
+                <span class="habit-tag care-tag" onclick="addSelfCare('深呼吸放松')">深呼吸放松</span>
+                <span class="habit-tag care-tag" onclick="addSelfCare('出门晒晒太阳')">出门晒晒太阳</span>
+                <span class="habit-tag care-tag" onclick="addSelfCare('听首喜欢的歌')">听首喜欢的歌</span>
+                <span class="habit-tag care-tag" onclick="addSelfCare('给自己泡杯茶')">给自己泡杯茶</span>
+            </div>
+            <div class="custom-habit-input">
+                <input type="text" id="custom-care" placeholder="自定义关怀...">
+                <button class="btn" onclick="addCustomCare()">+</button>
+            </div>
+            <div id="care-list" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="stats-tabs">
+                <button class="stats-tab active" onclick="switchHabitTab('day')">日</button>
+                <button class="stats-tab" onclick="switchHabitTab('week')">周</button>
+                <button class="stats-tab" onclick="switchHabitTab('month')">月</button>
+            </div>
+            <div class="habit-chart" id="habit-chart"></div>
+        </div>
+    </div>
+
+    <!-- 每日复盘页 -->
+    <div id="review-page" class="page">
+        <h2 class="page-title">每日复盘</h2>
+
+        <div class="card">
+            <textarea class="review-textarea" id="review-text" placeholder="写下今天的想法..."></textarea>
+            <div class="review-btns">
+                <button class="review-btn voice-btn" onclick="startVoiceInput()">🎤 语音输入</button>
+                <button class="review-btn ai-btn" onclick="getAISummary()">✨ AI总结</button>
+                <button class="review-btn btn-primary" onclick="saveReview()">💾 保存</button>
+            </div>
+            <div class="ai-summary" id="ai-summary" style="display: none;"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 12px; font-family: 'Noto Serif SC', serif;">历史记录</h3>
+            <div id="review-history"></div>
+        </div>
+    </div>
+
+    <!-- 自我之镜页 -->
+    <div id="mirror-page" class="page">
+        <h2 class="page-title">自我之镜</h2>
+
+        <div class="card">
+            <div class="mirror-tree" id="mirror-tree"></div>
+            <button class="mirror-add-btn" onclick="addMirrorNode(1)">+ 添加节点</button>
+        </div>
+    </div>
+
+    <!-- 历史记录页 -->
+    <div id="history-page" class="page">
+        <h2 class="page-title">打卡历史</h2>
+
+        <div class="card">
+            <div class="history-calendar" id="history-calendar"></div>
+        </div>
+
+        <div id="history-list"></div>
+    </div>
+
+    <!-- 设置/备份页 -->
+    <div id="settings-page" class="page">
+        <h2 class="page-title">设置与备份</h2>
+
+        <div class="card">
+            <button class="backup-btn export-btn" onclick="exportData()">📤 导出数据</button>
+            <button class="backup-btn import-btn" onclick="document.getElementById('import-input').click()">📥 导入数据</button>
+            <input type="file" id="import-input" accept=".json" onchange="importData(event)">
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 12px; font-family: 'Noto Serif SC', serif;">API配置</h3>
+            <input type="text" id="api-key-input" placeholder="输入API Key（可选）" style="width: 100%; padding: 12px; border: 1.5px solid var(--border-parchment); border-radius: 10px; font-family: 'Noto Serif SC', serif; background: var(--parchment-light);">
+            <button class="backup-btn" style="background: rgba(122, 156, 156, 0.15); margin-top: 12px;" onclick="saveApiKey()">保存API Key</button>
+        </div>
+
+        <div class="card" style="font-size:0.85rem;">
+            <h3 style="margin-bottom: 8px; font-family: 'Noto Serif SC', serif;">数据诊断</h3>
+            <div id="data-diagnostic" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--ink-muted);line-height:1.6;">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 树成长模态框 -->
+    <div class="modal" id="tree-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTreeModal()">×</button>
+            <div class="modal-title">树的成长</div>
+            <p style="font-family: 'Noto Serif SC', serif;">选择一根树枝：</p>
+            <div id="branch-list"></div>
+            <div class="branch-option" onclick="createNewBranch()">➕ 新建树枝</div>
+            <div id="grow-options" style="display: none; margin-top: 15px;">
+                <p style="font-family: 'Noto Serif SC', serif;">选择生长类型：</p>
+                <button class="grow-type-btn" onclick="growTree('leaf')">🍃 长树叶</button>
+                <button class="grow-type-btn" onclick="growTree('branch')">🌿 长侧枝</button>
+                <button class="grow-type-btn" onclick="growTree('thicken')">🪵 增粗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色提示 -->
+    <div class="character-tooltip" id="character-tooltip"></div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchPage('main')">
+            🌿<span>草地</span>
+        </button>
+        <button class="nav-btn" onclick="switchPage('habit')">
+            📊<span>习惯</span>
+        </button>
+        <button class="nav-btn" onclick="switchPage('review')">
+            📝<span>复盘</span>
+        </button>
+        <button class="nav-btn" onclick="switchPage('mirror')">
+            🪞<span>自我</span>
+        </button>
+        <button class="nav-btn" onclick="switchPage('history')">
+            📅<span>历史</span>
+        </button>
+        <button class="nav-btn" onclick="switchPage('settings')">
+            ⚙️<span>设置</span>
+        </button>
+    </nav>
+
+    <script>
+        // ===== 晨光粒子系统 =====
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let animId;
+
+            function resize() {
+                const parent = canvas.parentElement;
+                canvas.width = parent.offsetWidth;
+                canvas.height = parent.offsetHeight;
+            }
+
+            function createParticles(count) {
+                particles = [];
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: 0.5 + Math.random() * 1.5,
+                        dx: (Math.random() - 0.5) * 0.3,
+                        dy: -0.1 - Math.random() * 0.2,
+                        opacity: 0.1 + Math.random() * 0.4,
+                        pulseSpeed: 0.005 + Math.random() * 0.015,
+                        pulsePhase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    const pulse = 0.6 + 0.4 * Math.sin(Date.now() * p.pulseSpeed + p.pulsePhase);
+                    const alpha = p.opacity * pulse;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 230, 190, ${alpha})`;
+                    ctx.fill();
+
+                    // Glow
+                    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+                    grad.addColorStop(0, `rgba(255, 230, 190, ${alpha * 0.3})`);
+                    grad.addColorStop(1, 'transparent');
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    if (p.y < -10 || p.x < -10 || p.x > canvas.width + 10) {
+                        p.y = canvas.height + 5;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+                animId = requestAnimationFrame(draw);
+            }
+
+            resize();
+            createParticles(window.innerWidth < 480 ? 15 : 28);
+            draw();
+
+            window.addEventListener('resize', () => {
+                resize();
+                createParticles(window.innerWidth < 480 ? 15 : 28);
+            });
+
+            return () => cancelAnimationFrame(animId);
+        }
+
+        // ===== 数据模型 =====
+        const TASK_TYPES = {
+            basic: { icon: '🌱', name: '基础杂事', keywords: ['快递', '费', '洗', '买', '取', '收拾', '回邮件', '买菜', '缴费', '取件'] },
+            study: { icon: '📚', name: '学习成长', keywords: ['读', '课', '学', '写', '练', '背', '书', '复习', '笔记'] },
+            habit: { icon: '💪', name: '好习惯', keywords: ['早起', '喝水', '运动', '锻炼', '健身', '瑜伽', '冥想', '早睡', '跑步'] },
+            free: { icon: '🕊️', name: '自由渴望', keywords: ['画', '散', '写日记', '自由', '想', '散步', '发呆', '画画'] },
+            work: { icon: '⚡', name: '工作解决', keywords: ['方案', 'bug', '开会', '客户', '汇报', '工作', '项目', '需求', '报告'] }
+        };
+
+        let state = {
+            tasks: [],
+            weeds: [],
+            tree: {
+                branches: [{ id: 1, name: '主干', leaves: 0, subBranches: 0, thickness: 1 }],
+                leaves: [],
+                totalGrowth: 0
+            },
+            habits: { good: [], bad: [], care: [] },
+            characters: {
+                mermaid: { visible: false },
+                lily: { bloom: 0 },
+                blackCat: { calm: true },
+                deer: { friendly: false }
+            },
+            grass: { evaluation: null, badDays: 0 },
+            reviews: [],
+            mirror: {
+                nodes: [
+                    { id: 1, text: '我是谁', parentId: null },
+                    { id: 2, text: '自我身份：我是拼搏者', parentId: 1 },
+                    { id: 3, text: '人生关键词', parentId: 1 },
+                    { id: 4, text: '健康', parentId: 3 },
+                    { id: 5, text: '信念/信仰', parentId: 3 },
+                    { id: 6, text: '解决问题', parentId: 3 }
+                ],
+                nextId: 7
+            },
+            history: [],
+            apiKey: ''
+        };
+
+        // ===== 初始化 =====
+        function init() {
+            loadState();
+            renderAll();
+            renderCalendar();
+            renderMirrorTree();
+            updateStats();
+            initParticles();
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('xinyu-state');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                state = { ...state, ...parsed };
+            }
+            checkNewDay();
+        }
+
+        function saveState() {
+            localStorage.setItem('xinyu-state', JSON.stringify(state));
+        }
+
+        function checkNewDay() {
+            const today = new Date().toDateString();
+            const lastDate = localStorage.getItem('xinyu-last-date');
+            if (lastDate !== today) {
+                saveDailyHistory();
+                state.habits.good = [];
+                state.habits.bad = [];
+                state.habits.care = [];
+                state.grass.evaluation = null;
+                localStorage.setItem('xinyu-last-date', today);
+                saveState();
+            }
+        }
+
+        function saveDailyHistory() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dateStr = yesterday.toLocaleDateString('zh-CN');
+
+            const record = {
+                date: dateStr,
+                tasks: state.tasks.filter(t => t.completed),
+                habits: { ...state.habits },
+                grass: state.grass.evaluation,
+                treeGrowth: state.tree.totalGrowth
+            };
+
+            if (record.tasks.length > 0 || record.habits.good.length > 0 ||
+                record.habits.bad.length > 0 || record.habits.care.length > 0) {
+                state.history.unshift(record);
+            }
+        }
+
+        // ===== 页面切换 =====
+        function switchPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageName + '-page').classList.add('active');
+            event.currentTarget.classList.add('active');
+            if (pageName === 'habit') { updateStats(); renderHabitChart(state.currentChartPeriod || 'day'); }
+            if (pageName === 'review') { console.log('复盘数据:', JSON.stringify(state.reviews.slice(0,3))); renderReviewHistory(); }
+            if (pageName === 'history') renderHistoryList();
+            if (pageName === 'settings') renderDataDiagnostic();
+        }
+
+        // ===== 任务系统 =====
+        function classifyTask(text) {
+            const lowerText = text.toLowerCase();
+            for (const [type, config] of Object.entries(TASK_TYPES)) {
+                if (config.keywords.some(kw => lowerText.includes(kw))) {
+                    return type;
+                }
+            }
+            return 'basic';
+        }
+
+        function addTask() {
+            const input = document.getElementById('task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const type = classifyTask(text);
+            const task = {
+                id: Date.now(),
+                text,
+                type,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            state.tasks.push(task);
+            input.value = '';
+
+            if (type === 'basic') {
+                addWeed(task.id);
+            }
+
+            saveState();
+            renderTasks();
+            renderWeeds();
+        }
+
+        function toggleTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+
+                if (task.completed) {
+                    removeWeed(id);
+
+                    if (task.type === 'habit') {
+                        addGoodHabit(task.text);
+                    }
+
+                    if (task.type === 'study') {
+                        setTimeout(() => showTreeModal(), 300);
+                    }
+
+                    if (task.type === 'free') {
+                        state.characters.mermaid.visible = true;
+                        renderCharacters();
+                    }
+                } else {
+                    if (task.type === 'basic') {
+                        addWeed(id);
+                    }
+                }
+
+                saveState();
+                renderTasks();
+                renderWeeds();
+            }
+        }
+
+        function changeTaskType(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                const types = Object.keys(TASK_TYPES);
+                const currentIndex = types.indexOf(task.type);
+                task.type = types[(currentIndex + 1) % types.length];
+                saveState();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            removeWeed(id);
+            saveState();
+            renderTasks();
+            renderWeeds();
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            const today = new Date().toDateString();
+
+            // 未完成的任务：全部显示，不随日期消失
+            const pendingTasks = state.tasks.filter(t => !t.completed);
+            // 今日已完成的任务（让你看到今天完成了什么）
+            const todayDoneTasks = state.tasks.filter(t =>
+                t.completed && new Date(t.createdAt).toDateString() === today
+            );
+
+            let html = '';
+
+            if (pendingTasks.length > 0) {
+                html += `<div style="font-size:0.8rem;color:var(--ink-muted);margin-bottom:6px;font-family:'Noto Serif SC',serif;">待完成</div>`;
+                html += pendingTasks.map(task => `
+                    <div class="task-item">
+                        <span class="task-type" onclick="changeTaskType(${task.id})">${TASK_TYPES[task.type].icon}</span>
+                        <input type="checkbox" class="task-checkbox" onchange="toggleTask(${task.id})">
+                        <span class="task-text">${task.text}</span>
+                        <button class="task-delete" onclick="deleteTask(${task.id})">×</button>
+                    </div>
+                `).join('');
+            }
+
+            if (todayDoneTasks.length > 0) {
+                if (pendingTasks.length > 0) {
+                    html += `<div style="border-top:1px dashed var(--border-parchment);margin:10px 0;"></div>`;
+                }
+                html += `<div style="font-size:0.8rem;color:var(--ink-muted);margin-bottom:6px;font-family:'Noto Serif SC',serif;">今日完成</div>`;
+                html += todayDoneTasks.map(task => `
+                    <div class="task-item">
+                        <span class="task-type" onclick="changeTaskType(${task.id})">${TASK_TYPES[task.type].icon}</span>
+                        <input type="checkbox" class="task-checkbox" checked onchange="toggleTask(${task.id})">
+                        <span class="task-text completed">${task.text}</span>
+                        <button class="task-delete" onclick="deleteTask(${task.id})">×</button>
+                    </div>
+                `).join('');
+            }
+
+            if (!html) {
+                html = '<div style="color:var(--ink-muted);text-align:center;padding:20px 0;font-family:\'Noto Serif SC\',serif;">暂无任务</div>';
+            }
+
+            list.innerHTML = html;
+        }
+
+        // ===== 杂草系统 =====
+        function addWeed(taskId) {
+            const weed = {
+                id: taskId,
+                createdAt: new Date().toISOString(),
+                status: 'green'
+            };
+            state.weeds.push(weed);
+        }
+
+        function removeWeed(taskId) {
+            state.weeds = state.weeds.filter(w => w.id !== taskId);
+        }
+
+        function renderWeeds() {
+            const container = document.getElementById('weeds-container');
+            updateWeedStatus();
+
+            container.innerHTML = state.weeds.map((weed, index) => {
+                const positions = getWeedPosition(index);
+                return `
+                    <div class="weed ${weed.status}" style="left: ${positions.x}%; top: ${positions.y}%;">
+                        <svg width="20" height="30" viewBox="0 0 20 30">
+                            <path d="M10 28 Q8 20 10 15 Q12 10 10 5" fill="none" stroke="#6E8E5E" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M10 20 Q6 18 4 15" fill="none" stroke="#7E9E6E" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M10 18 Q14 16 16 13" fill="none" stroke="#7E9E6E" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getWeedPosition(index) {
+            const positions = [
+                { x: 25, y: 55 }, { x: 35, y: 65 }, { x: 70, y: 60 },
+                { x: 80, y: 45 }, { x: 45, y: 70 }, { x: 60, y: 50 },
+                { x: 30, y: 75 }, { x: 75, y: 70 }, { x: 20, y: 50 },
+                { x: 55, y: 45 }, { x: 40, y: 60 }, { x: 65, y: 55 }
+            ];
+            return positions[index % positions.length];
+        }
+
+        function updateWeedStatus() {
+            const now = new Date();
+            state.weeds.forEach(weed => {
+                const created = new Date(weed.createdAt);
+                const days = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+                if (days >= 3) {
+                    weed.status = 'wilted';
+                } else if (days >= 2) {
+                    weed.status = 'yellow';
+                }
+            });
+
+            state.weeds = state.weeds.filter(w => {
+                const created = new Date(w.createdAt);
+                const days = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+                return days < 4;
+            });
+        }
+
+        // ===== 树系统 =====
+        let selectedBranch = null;
+
+        function showTreeModal() {
+            document.getElementById('tree-modal').classList.add('show');
+            renderBranchList();
+            document.getElementById('grow-options').style.display = 'none';
+        }
+
+        function closeTreeModal() {
+            document.getElementById('tree-modal').classList.remove('show');
+            selectedBranch = null;
+        }
+
+        function renderBranchList() {
+            const list = document.getElementById('branch-list');
+            list.innerHTML = state.tree.branches.map(branch => `
+                <div class="branch-option" onclick="selectBranch(${branch.id})">
+                    <span>${branch.name}</span>
+                    <span>🍃${branch.leaves} 🌿${branch.subBranches}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectBranch(branchId) {
+            selectedBranch = branchId;
+            document.querySelectorAll('.branch-option').forEach(el => el.style.background = '');
+            event.currentTarget.style.background = 'rgba(184, 145, 68, 0.15)';
+            document.getElementById('grow-options').style.display = 'block';
+        }
+
+        function createNewBranch() {
+            const name = prompt('请输入新树枝名称：');
+            if (name) {
+                const newBranch = {
+                    id: Date.now(),
+                    name,
+                    leaves: 0,
+                    subBranches: 0,
+                    thickness: 1
+                };
+                state.tree.branches.push(newBranch);
+                saveState();
+                renderBranchList();
+                selectBranch(newBranch.id);
+            }
+        }
+
+        function growTree(type) {
+            if (!selectedBranch) {
+                alert('请先选择一根树枝');
+                return;
+            }
+
+            const branch = state.tree.branches.find(b => b.id === selectedBranch);
+            if (branch) {
+                if (type === 'leaf') {
+                    branch.leaves++;
+                } else if (type === 'branch') {
+                    branch.subBranches++;
+                } else if (type === 'thicken') {
+                    branch.thickness++;
+                }
+                state.tree.totalGrowth++;
+                saveState();
+                renderTree();
+                closeTreeModal();
+            }
+        }
+
+        function renderTree() {
+            const leavesGroup = document.getElementById('tree-leaves');
+            let content = '';
+
+            state.tree.branches.forEach(branch => {
+                for (let i = 0; i < branch.leaves; i++) {
+                    const x = 25 + Math.random() * 50;
+                    const y = 25 + Math.random() * 40;
+                    content += `<circle cx="${x}" cy="${y}" r="3" fill="#9ED59E"/>`;
+                }
+            });
+
+            leavesGroup.innerHTML = content;
+        }
+
+        // ===== 习惯系统 =====
+        function addGoodHabit(text) {
+            if (!state.habits.good.includes(text)) {
+                state.habits.good.push(text);
+                saveState();
+                renderGoodHabits();
+            }
+        }
+
+        function renderGoodHabits() {
+            const container = document.getElementById('good-habit-tags');
+            const count = document.getElementById('good-habit-count');
+            count.textContent = state.habits.good.length;
+
+            container.innerHTML = state.habits.good.map(habit =>
+                `<span class="habit-tag selected" onclick="removeGoodHabit('${habit.replace(/'/g, "\\'")}')" style="cursor:pointer;">${habit} ✕</span>`
+            ).join('');
+
+            checkDeerStatus();
+        }
+
+        function removeGoodHabit(text) {
+            state.habits.good = state.habits.good.filter(h => h !== text);
+            saveState();
+            renderGoodHabits();
+        }
+
+        function addCustomGoodHabit() {
+            const input = document.getElementById('custom-good-habit');
+            const text = input.value.trim();
+            if (text) {
+                addGoodHabit(text);
+                input.value = '';
+            }
+        }
+
+        // 从历史中推荐最常做的好习惯
+        function getSuggestedHabits() {
+            const freq = {};
+            // 扫码历史记录
+            state.history.forEach(h => {
+                (h.habits.good || []).forEach(hb => { freq[hb] = (freq[hb] || 0) + 1; });
+            });
+            // 加上今天已选的（让推荐更有延续性）
+            state.habits.good.forEach(hb => { freq[hb] = (freq[hb] || 0) + 1; });
+            // 按频率排序取前 6
+            return Object.entries(freq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(e => e[0]);
+        }
+
+        function renderHabitSuggestions() {
+            const container = document.getElementById('habit-suggestions');
+            if (!container) return;
+            const suggestions = getSuggestedHabits();
+            if (suggestions.length === 0) {
+                // 没有历史时显示默认推荐
+                container.innerHTML = ['早起','运动','阅读','冥想','喝水充足','早睡']
+                    .map(h => `<span class="habit-tag" onclick="addGoodHabit('${h}')">${h}</span>`)
+                    .join('');
+                return;
+            }
+            container.innerHTML = suggestions
+                .map(h => `<span class="habit-tag" onclick="addGoodHabit('${h.replace(/'/g, "\\'")}')">${h}</span>`)
+                .join('');
+        }
+
+        function addBadHabit(text) {
+            state.habits.bad.push(text);
+            saveState();
+            renderBadHabits();
+
+            state.characters.blackCat.calm = false;
+            renderCharacters();
+        }
+
+        function renderBadHabits() {
+            const list = document.getElementById('bad-habit-list');
+            list.innerHTML = state.habits.bad.map((habit, i) =>
+                `<span class="habit-tag bad-habit-tag" style="margin: 3px;">${habit}</span>`
+            ).join('');
+        }
+
+        function addCustomBadHabit() {
+            const input = document.getElementById('custom-bad-habit');
+            const text = input.value.trim();
+            if (text) {
+                addBadHabit(text);
+                input.value = '';
+            }
+        }
+
+        function addSelfCare(text) {
+            state.habits.care.push(text);
+            saveState();
+            renderSelfCare();
+
+            state.characters.lily.bloom = Math.min(2, state.characters.lily.bloom + 1);
+            renderCharacters();
+        }
+
+        function renderSelfCare() {
+            const list = document.getElementById('care-list');
+            list.innerHTML = state.habits.care.map((care, i) =>
+                `<span class="habit-tag care-tag" style="margin: 3px;">${care}</span>`
+            ).join('');
+        }
+
+        function addCustomCare() {
+            const input = document.getElementById('custom-care');
+            const text = input.value.trim();
+            if (text) {
+                addSelfCare(text);
+                input.value = '';
+            }
+        }
+
+        // ===== 角色交互 =====
+        function renderCharacters() {
+            const mermaid = document.getElementById('mermaid');
+            const cat = document.getElementById('black-cat');
+
+            mermaid.classList.toggle('visible', state.characters.mermaid.visible);
+            mermaid.classList.toggle('hidden', !state.characters.mermaid.visible);
+
+            cat.classList.toggle('agitated', !state.characters.blackCat.calm);
+
+            renderLily();
+        }
+
+        function renderLily() {
+            const petals = document.getElementById('lily-petals');
+            const bloom = state.characters.lily.bloom;
+
+            const scales = [0.7, 0.85, 1];
+            const opacity = [0.6, 0.8, 1];
+
+            petals.style.transform = `scale(${scales[bloom]})`;
+            petals.style.opacity = opacity[bloom];
+        }
+
+        function interactMermaid() {
+            showTooltip('🧜 人鱼在湖中静静地游弋...', event);
+        }
+
+        function interactLily() {
+            if (state.characters.lily.bloom >= 2) {
+                showTooltip('🌺 百合花已盛开，对自己说：你值得被温柔对待', event);
+            } else {
+                showTooltip('🌷 记录更多自我关怀，百合花会慢慢开放', event);
+            }
+        }
+
+        function interactCat() {
+            if (state.characters.blackCat.calm) {
+                showTooltip('🐈‍⬛ 黑猫很平静，在草地上晒太阳', event);
+            } else {
+                showTooltip('😺 黑猫有些烦躁，点击安抚', event);
+                state.characters.blackCat.calm = true;
+                saveState();
+                setTimeout(() => renderCharacters(), 1000);
+            }
+        }
+
+        function interactDeer() {
+            if (state.characters.deer.friendly) {
+                showTooltip('🦌 梅花鹿愿意亲近你，和它待一会儿吧', event);
+            } else {
+                showTooltip('🦌 梅花鹿安详地在草地上吃草', event);
+            }
+        }
+
+        function showTooltip(text, event) {
+            const tooltip = document.getElementById('character-tooltip');
+            tooltip.textContent = text;
+            tooltip.style.left = event.clientX + 'px';
+            tooltip.style.top = (event.clientY - 50) + 'px';
+            tooltip.classList.add('show');
+
+            setTimeout(() => tooltip.classList.remove('show'), 2500);
+        }
+
+        function checkDeerStatus() {
+            const recentGoodDays = state.history.slice(0, 3).filter(h => h.habits.good.length >= 2).length;
+            if (recentGoodDays >= 3 || state.habits.good.length >= 2) {
+                state.characters.deer.friendly = true;
+                renderCharacters();
+            }
+        }
+
+        // ===== 草地自评 =====
+        function evaluateGrass(level) {
+            state.grass.evaluation = level;
+
+            const overlay = document.getElementById('grassland-overlay');
+            overlay.className = 'grassland-overlay ' + level;
+
+            if (level === 'bad') {
+                state.grass.badDays++;
+            } else {
+                state.grass.badDays = 0;
+            }
+
+            if (state.grass.badDays >= 3) {
+                state.characters.blackCat.calm = false;
+                renderCharacters();
+            }
+
+            saveState();
+
+            document.querySelectorAll('.eval-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        // ===== 每日复盘 =====
+        function startVoiceInput() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'zh-CN';
+
+                recognition.onresult = (event) => {
+                    const text = event.results[0][0].transcript;
+                    document.getElementById('review-text').value += text;
+                };
+
+                recognition.start();
+                alert('开始语音识别，请说话...');
+            } else {
+                alert('您的浏览器不支持语音识别');
+            }
+        }
+
+        function getAISummary() {
+            const text = document.getElementById('review-text').value;
+            if (!text) {
+                alert('请先写下今天的复盘');
+                return;
+            }
+
+            const summaryDiv = document.getElementById('ai-summary');
+
+            if (state.apiKey) {
+                callRealAI(text);
+            } else {
+                summaryDiv.innerHTML = `<strong>AI总结：</strong><br>今天你记录了关于${text.length > 50 ? '丰富' : '简洁'}的内容。${
+                    state.habits.good.length > 0 ? `完成了${state.habits.good.length}个好习惯，很棒！` : ''
+                }${
+                    state.habits.bad.length > 0 ? `注意到${state.habits.bad.length}个需要改进的习惯，保持觉察。` : ''
+                }继续保持对自我的关注和觉察。`;
+                summaryDiv.style.display = 'block';
+            }
+        }
+
+        async function callRealAI(text) {
+            const summaryDiv = document.getElementById('ai-summary');
+            summaryDiv.innerHTML = '正在生成总结...';
+            summaryDiv.style.display = 'block';
+
+            try {
+                summaryDiv.innerHTML = '<strong>AI总结：</strong><br>API调用需要配置正确的端点。';
+            } catch (error) {
+                summaryDiv.innerHTML = 'AI总结失败：' + error.message;
+            }
+        }
+
+        function saveReview() {
+            const text = document.getElementById('review-text').value;
+            if (!text) return;
+
+            const review = {
+                date: new Date().toLocaleDateString('zh-CN'),
+                text,
+                aiSummary: document.getElementById('ai-summary').textContent
+            };
+
+            state.reviews.unshift(review);
+            saveState();
+
+            alert('复盘已保存！');
+            document.getElementById('review-text').value = '';
+            document.getElementById('ai-summary').style.display = 'none';
+            renderReviewHistory();
+        }
+
+        function renderReviewHistory() {
+            const container = document.getElementById('review-history');
+            container.innerHTML = state.reviews.slice(0, 10).map(review => `
+                <div class="history-item">
+                    <div class="history-date">${review.date}</div>
+                    <div class="history-content">${review.text}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== 自我之镜 =====
+        function renderMirrorTree() {
+            const container = document.getElementById('mirror-tree');
+            container.innerHTML = renderMirrorNode(1);
+        }
+
+        function renderMirrorNode(nodeId) {
+            const node = state.mirror.nodes.find(n => n.id === nodeId);
+            if (!node) return '';
+
+            const children = state.mirror.nodes.filter(n => n.parentId === nodeId);
+
+            return `
+                <div class="mirror-node">
+                    <div class="mirror-node-header">
+                        <span class="mirror-node-text">${node.text}</span>
+                        <button class="mirror-node-btn edit" onclick="editMirrorNode(${node.id})">编辑</button>
+                        ${nodeId !== 1 ? `<button class="mirror-node-btn delete" onclick="deleteMirrorNode(${node.id})">×</button>` : ''}
+                    </div>
+                    ${children.length > 0 ? `<div class="mirror-tree">${children.map(c => renderMirrorNode(c.id)).join('')}</div>` : ''}
+                    <button class="mirror-add-btn" onclick="addMirrorNode(${node.id})">+ 添加子节点</button>
+                </div>
+            `;
+        }
+
+        function addMirrorNode(parentId) {
+            const text = prompt('请输入节点内容：');
+            if (text) {
+                state.mirror.nodes.push({
+                    id: state.mirror.nextId++,
+                    text,
+                    parentId
+                });
+                saveState();
+                renderMirrorTree();
+            }
+        }
+
+        function editMirrorNode(nodeId) {
+            const node = state.mirror.nodes.find(n => n.id === nodeId);
+            if (node) {
+                const newText = prompt('编辑节点内容：', node.text);
+                if (newText) {
+                    node.text = newText;
+                    saveState();
+                    renderMirrorTree();
+                }
+            }
+        }
+
+        function deleteMirrorNode(nodeId) {
+            if (confirm('确定删除此节点及其所有子节点？')) {
+                const toDelete = [nodeId];
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    state.mirror.nodes.forEach(n => {
+                        if (toDelete.includes(n.parentId) && !toDelete.includes(n.id)) {
+                            toDelete.push(n.id);
+                            changed = true;
+                        }
+                    });
+                }
+                state.mirror.nodes = state.mirror.nodes.filter(n => !toDelete.includes(n.id));
+                saveState();
+                renderMirrorTree();
+            }
+        }
+
+        // ===== 历史记录 =====
+        function renderCalendar() {
+            const calendar = document.getElementById('history-calendar');
+            const today = new Date();
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+
+            let html = '';
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                html += `<div class="calendar-day" style="background: rgba(212, 201, 181, 0.3); font-size: 0.7rem;">${day}</div>`;
+            });
+
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day"></div>';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isToday = d === today.getDate();
+                const dateStr = `${today.getFullYear()}/${today.getMonth() + 1}/${d}`;
+                const hasRecord = state.history.some(h => h.date === dateStr);
+
+                html += `<div class="calendar-day ${isToday ? 'today' : ''} ${hasRecord ? 'has-record' : ''}"
+                         onclick="showHistoryDetail('${dateStr}')">${d}</div>`;
+            }
+
+            calendar.innerHTML = html;
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = state.history.slice(0, 30).map(record => `
+                <div class="history-item">
+                    <div class="history-date">${record.date}</div>
+                    <div class="history-content">
+                        ${record.habits.good.length > 0 ? `<div>🌟 好习惯：${record.habits.good.join('、')}</div>` : ''}
+                        ${record.habits.bad.length > 0 ? `<div>⚠️ 需注意：${record.habits.bad.join('、')}</div>` : ''}
+                        ${record.habits.care.length > 0 ? `<div>💝 自我关怀：${record.habits.care.join('、')}</div>` : ''}
+                        ${record.grass ? `<div>草地自评：${record.grass === 'good' ? '🌱还不错' : record.grass === 'normal' ? '😐一般' : '😔有点糟'}</div>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<p style="color: var(--ink-muted); text-align: center; font-family: \'Noto Serif SC\', serif;">暂无历史记录</p>';
+        }
+
+        function showHistoryDetail(date) {
+            const record = state.history.find(h => h.date === date);
+            if (record) {
+                alert(`${date}\n好习惯：${record.habits.good.join('、') || '无'}\n需注意：${record.habits.bad.join('、') || '无'}\n自我关怀：${record.habits.care.join('、') || '无'}`);
+            }
+        }
+
+        // ===== 习惯统计 - 柱状图 =====
+        function getHabitCounts(dateStr) {
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+            if (dateStr === todayStr) {
+                return { good: state.habits.good.length, bad: state.habits.bad.length };
+            }
+            const record = state.history.find(h => h.date === dateStr);
+            return record
+                ? { good: record.habits.good.length, bad: record.habits.bad.length }
+                : { good: 0, bad: 0 };
+        }
+
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function renderHabitChart(period) {
+            const container = document.getElementById('habit-chart');
+            if (!container) return;
+
+            const today = new Date();
+            let entries = [];
+            let maxVal = 0;
+
+            if (period === 'day') {
+                for (let i = 6; i >= 1; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    const ds = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+                    const c = getHabitCounts(ds);
+                    entries.push({ label: `${d.getMonth()+1}/${d.getDate()}`, good: c.good, bad: c.bad });
+                    maxVal = Math.max(maxVal, c.good, c.bad);
+                }
+                const todayC = getHabitCounts(`${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`);
+                entries.push({ label: '今天', good: todayC.good, bad: todayC.bad });
+                maxVal = Math.max(maxVal, todayC.good, todayC.bad);
+            } else if (period === 'week') {
+                const monday = getMonday(today);
+                for (let w = 4; w >= 0; w--) {
+                    const ws = new Date(monday);
+                    ws.setDate(ws.getDate() - w * 7);
+                    const we = new Date(ws);
+                    we.setDate(we.getDate() + 6);
+                    let good = 0, bad = 0;
+                    if (today >= ws && today <= we) {
+                        good += state.habits.good.length;
+                        bad += state.habits.bad.length;
+                    }
+                    state.history.forEach(h => {
+                        const hd = new Date(h.date);
+                        if (hd >= ws && hd <= we) {
+                            good += h.habits.good.length;
+                            bad += h.habits.bad.length;
+                        }
+                    });
+                    entries.push({ label: `${ws.getMonth()+1}/${ws.getDate()}`, good, bad });
+                    maxVal = Math.max(maxVal, good, bad);
+                }
+            } else if (period === 'month') {
+                for (let m = 5; m >= 0; m--) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
+                    const ms = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const me = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                    let good = 0, bad = 0;
+                    if (today >= ms && today <= me) {
+                        good += state.habits.good.length;
+                        bad += state.habits.bad.length;
+                    }
+                    state.history.forEach(h => {
+                        const hd = new Date(h.date);
+                        if (hd >= ms && hd <= me) {
+                            good += h.habits.good.length;
+                            bad += h.habits.bad.length;
+                        }
+                    });
+                    entries.push({ label: `${d.getMonth()+1}月`, good, bad });
+                    maxVal = Math.max(maxVal, good, bad);
+                }
+            }
+
+            maxVal = Math.max(maxVal, 1);
+            const maxH = 120;
+
+            let html = '<div style="display:flex;align-items:flex-end;gap:6px;min-height:145px;padding:10px 0;">';
+            entries.forEach(e => {
+                const gH = Math.round(e.good/maxVal*maxH);
+                const bH = Math.round(e.bad/maxVal*maxH);
+                html += `<div class="chart-column">
+                    <div class="chart-bars">
+                        <div style="font-size:0.65rem;color:var(--forest-green);text-align:center;line-height:1">${e.good||''}</div>
+                        <div class="chart-bar good" style="height:${gH}px" title="好习惯 ${e.good}"></div>
+                        <div style="font-size:0.65rem;color:#B55A4A;text-align:center;line-height:1">${e.bad||''}</div>
+                        <div class="chart-bar bad" style="height:${bH}px" title="坏习惯 ${e.bad}"></div>
+                    </div>
+                    <div class="chart-label">${e.label}</div>
+                </div>`;
+            });
+            html += '</div>';
+            // 总计汇总
+            const totalGood = entries.reduce((s,e) => s + e.good, 0);
+            const totalBad = entries.reduce((s,e) => s + e.bad, 0);
+            html += '<div style="display:flex;gap:20px;justify-content:center;padding:8px 0 4px;border-top:1px solid var(--border-parchment);font-size:0.85rem;font-family:\'Noto Serif SC\',serif;color:var(--ink-dark);">'
+                + `<span>🌟 好习惯 <strong style="color:var(--forest-green)">${totalGood}</strong></span>`
+                + `<span>⚠️ 坏习惯 <strong style="color:#B55A4A">${totalBad}</strong></span>`
+                + '</div>';
+            html += '<div class="chart-legend">' +
+                '<span><span class="chart-legend-dot" style="background:var(--forest-green)"></span>好习惯</span>' +
+                '<span><span class="chart-legend-dot" style="background:var(--danger)"></span>坏习惯</span>' +
+                '</div>';
+            container.innerHTML = html;
+        }
+
+        function switchHabitTab(period) {
+            state.currentChartPeriod = period;
+            document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            renderHabitChart(period);
+        }
+
+        function updateStats() {
+            renderHabitChart(state.currentChartPeriod || 'day');
+            renderGoodHabits();
+            renderHabitSuggestions();
+            renderBadHabits();
+            renderSelfCare();
+        }
+
+        // ===== 备份恢复 =====
+        function exportData() {
+            const data = JSON.stringify(state, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `心域备份_${new Date().toLocaleDateString('zh-CN')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('确定要覆盖当前数据吗？')) {
+                        state = { ...state, ...imported };
+                        saveState();
+                        renderAll();
+                        alert('数据导入成功！');
+                    }
+                } catch (err) {
+                    alert('导入失败：文件格式错误');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function saveApiKey() {
+            state.apiKey = document.getElementById('api-key-input').value;
+            saveState();
+            alert('API Key 已保存');
+        }
+
+        // ===== 渲染全部 =====
+        function renderAll() {
+            renderTasks();
+            renderWeeds();
+            renderTree();
+            renderCharacters();
+            renderReviewHistory();
+        }
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
