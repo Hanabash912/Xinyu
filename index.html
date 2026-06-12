@@ -2309,9 +2309,13 @@
         let currentRecognition = null;
 
         function startVoiceInput() {
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const textarea = document.getElementById('review-text');
+
+            // 全平台统一：优先尝试 Web Speech API（Android Chrome / iOS 16.4+ 都支持）
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
+                // 用系统语言，无需指定 zh-CN
                 recognition.lang = 'zh-CN';
                 recognition.interimResults = true;
                 recognition.continuous = false;
@@ -2319,6 +2323,7 @@
 
                 const indicator = document.getElementById('voice-indicator');
                 indicator.classList.add('active');
+                indicator.textContent = '🎤 请说话...';
 
                 recognition.onresult = (event) => {
                     let interim = '';
@@ -2331,33 +2336,44 @@
                         }
                     }
                     if (final) {
-                        const textarea = document.getElementById('review-text');
-                        textarea.value += final;
+                        textarea.value += (textarea.value ? ' ' : '') + final;
+                        // 自动增长高度
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
                     }
-                    indicator.textContent = interim ? `🎤 ${interim}` : '🎤 正在聆听...';
+                    indicator.textContent = interim ? `🎤 ${interim}` : '🎤 请说话...';
                 };
 
-                recognition.onerror = () => {
-                    indicator.textContent = '🎤 语音识别出错，请重试';
-                    setTimeout(() => indicator.classList.remove('active'), 2000);
+                recognition.onerror = (e) => {
+                    if (e.error === 'not-allowed') {
+                        indicator.textContent = '🎤 请允许使用麦克风权限';
+                    } else {
+                        indicator.textContent = '🎤 语音识别出错，已切换到键盘听写';
+                        // 出错时回退到键盘听写
+                        textarea.focus();
+                    }
+                    setTimeout(() => indicator.classList.remove('active'), 3000);
                 };
 
                 recognition.onend = () => {
                     indicator.classList.remove('active');
-                    indicator.textContent = '🎤 正在聆听...';
+                    indicator.textContent = '🎤 请说话...';
                     currentRecognition = null;
+                    // 重置 textarea 高度
+                    textarea.style.height = 'auto';
                 };
 
                 recognition.start();
-            } else {
-                // 手机浏览器不支持 Speech API，聚焦文本框弹出键盘听写
-                const textarea = document.getElementById('review-text');
-                textarea.focus();
-                textarea.placeholder = '点击键盘上的麦克风图标开始听写...';
-                setTimeout(() => {
-                    textarea.placeholder = '写下今天的想法...';
-                }, 5000);
+                return;
             }
+
+            // 完全不支持语音 API 时 → 键盘听写
+            textarea.focus();
+            textarea.placeholder = '📱 点击键盘麦克风图标说话';
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                textarea.placeholder = '写下今天的想法...';
+            }, 6000);
         }
 
         function getAISummary() {
