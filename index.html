@@ -2434,6 +2434,7 @@
             const task = state.tasks.find(t => t.id === id);
             if (task) {
                 task.completed = !task.completed;
+                if (task.completed) task.completedAt = new Date().toISOString();
 
                 if (task.completed) {
                     removeWeed(id);
@@ -2920,7 +2921,7 @@
             const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
             const todayHasData = state.habits.good.length > 0 || state.habits.bad.length > 0 ||
                 state.habits.care.length > 0 || state.grass.evaluation ||
-                state.tasks.some(t => t.completed);
+                state.tasks.some(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today.toDateString());
             if (todayHasData) hasDataDates.add(todayStr);
 
             const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
@@ -2982,7 +2983,13 @@
             const dateMap = {};
 
             // 今日临时数据
-            const todayTasks = state.tasks.filter(t => t.completed).map(t => t.text);
+            const todayTasks = state.tasks.filter(t => {
+                if (!t.completed) return false;
+                if (t.completedAt) {
+                    return new Date(t.completedAt).toDateString() === new Date().toDateString();
+                }
+                return false;
+            }).map(t => t.text);
             const hasTodayData = state.habits.good.length > 0 || state.habits.bad.length > 0 || state.habits.care.length > 0 || state.grass.evaluation;
             if (hasTodayData || todayTasks.length > 0) {
                 dateMap[todayStr] = {
