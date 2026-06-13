@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>心域 — 内心是一片草地</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Noto+Serif+SC:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Instrument+Serif:opsz@8..72&family=Inter:wght@400;500&family=Noto+Serif+SC:wght@400;600&display=swap');
 
         * {
             margin: 0;
@@ -30,6 +30,13 @@
             --water-light: #A5C0C0;
             --shadow-ink: rgba(44, 36, 22, 0.12);
             --border-parchment: #D4C9B5;
+
+            /* Velorah 风格 token */
+            --velorah-bg: hsl(201, 100%, 13%);
+            --velorah-fg: hsl(0, 0%, 100%);
+            --velorah-muted: hsl(240, 4%, 66%);
+            --font-display: "Instrument Serif", "Noto Serif SC", serif;
+            --font-body-ui: "Inter", "Noto Serif SC", sans-serif;
         }
 
         body {
@@ -410,20 +417,21 @@
             z-index: 6;
         }
 
-        /* ===== 底部导航 — 毛玻璃 ===== */
+        /* ===== 底部导航 — 毛玻璃 + Velorah 质感 ===== */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(245, 240, 232, 0.7);
+            background: rgba(245, 240, 232, 0.65);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             display: flex;
             justify-content: space-around;
             padding: 6px 0 env(safe-area-inset-bottom, 6px) 0;
             z-index: 100;
-            border-top: 1px solid var(--border-parchment);
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .nav-btn {
@@ -1471,9 +1479,372 @@
                 opacity: 0.3;
             }
         }
+
+        /* ===== Landing Page — Velorah 风格 ===== */
+        #landing-page {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: var(--velorah-bg);
+            color: var(--velorah-fg);
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: opacity 0.7s ease, visibility 0.7s ease;
+        }
+
+        #landing-page.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .landing-video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .landing-scrim {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(
+                180deg,
+                rgba(0, 36, 66, 0.72) 0%,
+                rgba(0, 36, 66, 0.55) 45%,
+                rgba(0, 36, 66, 0.82) 100%
+            );
+            pointer-events: none;
+        }
+
+        .landing-inner {
+            position: relative;
+            z-index: 2;
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .landing-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            max-width: 72rem;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .landing-logo {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 4vw, 2rem);
+            letter-spacing: -0.02em;
+            color: var(--velorah-fg);
+            text-decoration: none;
+        }
+
+        .landing-nav-links {
+            display: none;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .landing-nav-links {
+                display: flex;
+            }
+        }
+
+        .landing-nav-links a {
+            font-family: var(--font-body-ui);
+            font-size: 0.875rem;
+            color: var(--velorah-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .landing-nav-links a:hover,
+        .landing-nav-links a.active {
+            color: var(--velorah-fg);
+        }
+
+        .landing-hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 1.5rem 4rem;
+            max-width: 72rem;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .landing-eyebrow {
+            font-family: var(--font-body-ui);
+            font-size: 0.75rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--velorah-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .landing-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.75rem, 9vw, 5.5rem);
+            font-weight: 400;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            margin: 0;
+            max-width: 14ch;
+        }
+
+        .landing-title em {
+            font-style: normal;
+            color: var(--velorah-muted);
+        }
+
+        .landing-subtitle {
+            font-family: var(--font-body-ui);
+            font-size: clamp(1rem, 2.5vw, 1.125rem);
+            line-height: 1.75;
+            color: var(--velorah-muted);
+            max-width: 36rem;
+            margin: 2rem auto 0;
+        }
+
+        .landing-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.01);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: none;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            font-family: var(--font-body-ui);
+            color: var(--velorah-fg);
+            transition: transform 0.2s ease;
+        }
+
+        .liquid-glass:hover {
+            transform: scale(1.03);
+        }
+
+        .liquid-glass::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.4px;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.45) 0%,
+                rgba(255, 255, 255, 0.15) 20%,
+                rgba(255, 255, 255, 0) 40%,
+                rgba(255, 255, 255, 0) 60%,
+                rgba(255, 255, 255, 0.15) 80%,
+                rgba(255, 255, 255, 0.45) 100%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .landing-btn-primary {
+            border-radius: 9999px;
+            padding: 1.15rem 3.25rem;
+            font-size: 1rem;
+        }
+
+        .landing-btn-secondary {
+            border-radius: 9999px;
+            padding: 0.65rem 1.5rem;
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .landing-features {
+            padding: 0 1.5rem 5rem;
+            max-width: 72rem;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .landing-features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .landing-features-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.25rem;
+            }
+        }
+
+        .landing-feature-card {
+            border-radius: 1.25rem;
+            padding: 1.75rem 1.5rem;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .landing-feature-icon {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .landing-feature-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 400;
+            margin-bottom: 0.65rem;
+        }
+
+        .landing-feature-card p {
+            font-family: var(--font-body-ui);
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--velorah-muted);
+            margin: 0;
+        }
+
+        .landing-footer {
+            padding: 1.5rem;
+            text-align: center;
+            font-family: var(--font-body-ui);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.08em;
+        }
+
+        @keyframes fade-rise {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-rise {
+            animation: fade-rise 0.8s ease-out both;
+        }
+
+        .animate-fade-rise-delay {
+            animation: fade-rise 0.8s ease-out 0.2s both;
+        }
+
+        .animate-fade-rise-delay-2 {
+            animation: fade-rise 0.8s ease-out 0.4s both;
+        }
+
+        .animate-fade-rise-delay-3 {
+            animation: fade-rise 0.8s ease-out 0.55s both;
+        }
+
+        body.landing-active .paper-texture,
+        body.landing-active .bottom-nav,
+        body.landing-active .page {
+            visibility: hidden;
+        }
+
+        body.landing-active .page.active {
+            display: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade-rise,
+            .animate-fade-rise-delay,
+            .animate-fade-rise-delay-2,
+            .animate-fade-rise-delay-3 {
+                animation: none;
+            }
+            .liquid-glass:hover {
+                transform: none;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="landing-active">
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <video class="landing-video" autoplay loop muted playsinline>
+            <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4">
+        </video>
+        <div class="landing-scrim"></div>
+
+        <div class="landing-inner">
+            <nav class="landing-nav animate-fade-rise">
+                <a href="#" class="landing-logo" onclick="return false;">心域</a>
+                <div class="landing-nav-links">
+                    <a href="#landing-features" class="active">首页</a>
+                    <a href="#landing-features">功能</a>
+                    <a href="#landing-about">关于</a>
+                </div>
+                <button class="liquid-glass landing-btn-secondary" onclick="enterApp()">进入应用</button>
+            </nav>
+
+            <section class="landing-hero">
+                <p class="landing-eyebrow animate-fade-rise">内心是一片草地</p>
+                <h1 class="landing-title animate-fade-rise-delay">
+                    在<em>静默</em>中<br>让自我<em>生长</em>
+                </h1>
+                <p class="landing-subtitle animate-fade-rise-delay-2">
+                    用草地、成长之树与情绪居民，记录任务、习惯与复盘。
+                    在混沌日常里，为自己留一片可以专注生长的数字空间。
+                </p>
+                <div class="landing-cta-row animate-fade-rise-delay-3">
+                    <button class="liquid-glass landing-btn-primary" onclick="enterApp()">踏入心域</button>
+                </div>
+            </section>
+
+            <section class="landing-features" id="landing-features">
+                <div class="landing-features-grid">
+                    <article class="landing-feature-card liquid-glass animate-fade-rise-delay-2">
+                        <span class="landing-feature-icon">🌿</span>
+                        <h3>草地图景</h3>
+                        <p>任务化作杂草与清朗，每日自评改变草地色泽，让琐碎与完成都看得见。</p>
+                    </article>
+                    <article class="landing-feature-card liquid-glass animate-fade-rise-delay-2">
+                        <span class="landing-feature-icon">🌳</span>
+                        <h3>成长之树</h3>
+                        <p>每一次学习都在树枝上留下痕迹——长叶、分叉、增粗，积累属于你的知识体系。</p>
+                    </article>
+                    <article class="landing-feature-card liquid-glass animate-fade-rise-delay-3">
+                        <span class="landing-feature-icon">🦌</span>
+                        <h3>情绪居民</h3>
+                        <p>黑猫、小鹿、人鱼与百合花住在这片草地里，回应你的习惯、关怀与自由渴望。</p>
+                    </article>
+                </div>
+            </section>
+
+            <footer class="landing-footer" id="landing-about">
+                心域 · 纯前端 · 数据仅存于你的浏览器
+            </footer>
+        </div>
+    </div>
+
     <div class="paper-texture"></div>
 
     <!-- 主界面 — 草地视图 -->
@@ -1743,6 +2114,10 @@
         </div>
 
         <div class="card">
+            <button class="backup-btn" style="background: rgba(0, 36, 66, 0.08); color: var(--ink-dark);" onclick="showLandingAgain()">✨ 重新查看介绍页</button>
+        </div>
+
+        <div class="card">
             <h3 style="margin-bottom: 12px; font-family: 'Noto Serif SC', serif;">API配置</h3>
             <input type="text" id="api-key-input" placeholder="输入API Key（可选）" style="width: 100%; padding: 12px; border: 1.5px solid var(--border-parchment); border-radius: 10px; font-family: 'Noto Serif SC', serif; background: var(--parchment-light);">
             <button class="backup-btn" style="background: rgba(122, 156, 156, 0.15); margin-top: 12px;" onclick="saveApiKey()">保存API Key</button>
@@ -1906,11 +2281,38 @@
             apiKey: ''
         };
 
+        // ===== Landing Page =====
+        function enterApp() {
+            localStorage.setItem('xinyu-landing-entered', '1');
+            const landing = document.getElementById('landing-page');
+            landing.classList.add('hidden');
+            document.body.classList.remove('landing-active');
+            document.getElementById('main-page').classList.add('active');
+            setTimeout(() => {
+                landing.style.display = 'none';
+            }, 700);
+        }
+
+        function initLanding() {
+            const hasEntered = localStorage.getItem('xinyu-landing-entered');
+            if (hasEntered) {
+                const landing = document.getElementById('landing-page');
+                landing.style.display = 'none';
+                document.body.classList.remove('landing-active');
+            }
+        }
+
+        function showLandingAgain() {
+            localStorage.removeItem('xinyu-landing-entered');
+            location.reload();
+        }
+
         // ===== 初始化 =====
         // 嵌入备份数据（localStorage 为空时自动恢复）
         const EMBEDDED_BACKUP = {"tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376011905,"text":"拉伸背部滚按摩轴","type":"habit","completed":false,"createdAt":"2026-06-02T04:53:31.905Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"},{"id":1780406104305,"text":"starling银行看情况能否使用","type":"basic","completed":false,"createdAt":"2026-06-02T13:15:04.305Z"},{"id":1780495515238,"text":"看一章经济学","type":"study","completed":false,"createdAt":"2026-06-03T14:05:15.238Z"},{"id":1780496032131,"text":"一点前睡觉","type":"study","completed":false,"createdAt":"2026-06-03T14:13:52.131Z"},{"id":1780506828103,"text":"买火车票","type":"basic","completed":true,"createdAt":"2026-06-03T17:13:48.103Z"},{"id":1780506840824,"text":"看完群主攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:00.824Z"},{"id":1780506858184,"text":"准备行李包括充电器转换头充电宝","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:18.184Z"},{"id":1780506881969,"text":"预约复星具体时间","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:41.969Z"},{"id":1780506927767,"text":"查看serenity主页价值消息并按照截图关注另一位博主","type":"study","completed":true,"createdAt":"2026-06-03T17:15:27.767Z"},{"id":1780507002576,"text":"做好香港交通攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:42.576Z"},{"id":1780507011059,"text":"做一点旅游攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:51.059Z"},{"id":1780507749510,"text":"去出入境大厅更新签注","type":"basic","completed":true,"createdAt":"2026-06-03T17:29:09.510Z"},{"id":1781273853157,"text":"洗澡","type":"basic","completed":false,"createdAt":"2026-06-12T14:17:33.157Z"}],"weeds":[{"id":1781273853157,"createdAt":"2026-06-12T14:17:38.363Z","status":"green"}],"tree":{"branches":[{"id":1,"name":"主干","leaves":0,"subBranches":0,"thickness":1},{"id":1780376347968,"name":"经济学","leaves":1,"subBranches":2,"thickness":1},{"id":1780585019515,"name":"美股","leaves":0,"subBranches":0,"thickness":2}],"leaves":[],"totalGrowth":4},"habits":{"good":[],"bad":[],"care":[]},"characters":{"mermaid":{"visible":false},"lily":{"bloom":0},"blackCat":{"calm":true},"deer":{"friendly":false}},"grass":{"evaluation":null,"badDays":1},"reviews":[{"date":"2026/6/4","text":"今天好累在做各种攻略\n脑子觉得麻麻的\n前也不多就一两万，好干啥，唉","aiSummary":""},{"date":"2026/6/4","text":"今天\n1完成了港卡开户app下载确定了开卡银行\n2预约复星找到客户经理\n3找到线上开户安盛地盘蹭wifi\n","aiSummary":""}],"mirror":{"nodes":[{"id":1,"text":"我是谁","parentId":null},{"id":2,"text":"自我身份：我是拼搏者","parentId":1},{"id":3,"text":"人生关键词","parentId":1},{"id":4,"text":"健康","parentId":3},{"id":5,"text":"信念/信仰","parentId":3},{"id":6,"text":"解决问题","parentId":3},{"id":7,"text":"荨麻疹过敏","parentId":4},{"id":8,"text":"心理","parentId":2},{"id":9,"text":"爱沉溺于被伤害被抛弃被欺骗被孤立的幻想","parentId":8},{"id":11,"text":"自卑敏感内耗，看重他人对自己的评价","parentId":8},{"id":12,"text":"害怕求助别人，害怕张嘴，宁愿委屈自己也不愿意求助（在改进了）","parentId":11}],"nextId":13},"history":[{"date":"2026/6/11","tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"},{"id":1780506828103,"text":"买火车票","type":"basic","completed":true,"createdAt":"2026-06-03T17:13:48.103Z"},{"id":1780506840824,"text":"看完群主攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:00.824Z"},{"id":1780506858184,"text":"准备行李包括充电器转换头充电宝","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:18.184Z"},{"id":1780506881969,"text":"预约复星具体时间","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:41.969Z"},{"id":1780506927767,"text":"查看serenity主页价值消息并按照截图关注另一位博主","type":"study","completed":true,"createdAt":"2026-06-03T17:15:27.767Z"},{"id":1780507002576,"text":"做好香港交通攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:42.576Z"},{"id":1780507011059,"text":"做一点旅游攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:51.059Z"},{"id":1780507749510,"text":"去出入境大厅更新签注","type":"basic","completed":true,"createdAt":"2026-06-03T17:29:09.510Z"}],"habits":{"good":[],"bad":[],"care":[]},"grass":null,"treeGrowth":4},{"date":"2026/6/10","tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"},{"id":1780506828103,"text":"买火车票","type":"basic","completed":true,"createdAt":"2026-06-03T17:13:48.103Z"},{"id":1780506840824,"text":"看完群主攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:00.824Z"},{"id":1780506858184,"text":"准备行李包括充电器转换头充电宝","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:18.184Z"},{"id":1780506881969,"text":"预约复星具体时间","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:41.969Z"},{"id":1780506927767,"text":"查看serenity主页价值消息并按照截图关注另一位博主","type":"study","completed":true,"createdAt":"2026-06-03T17:15:27.767Z"},{"id":1780507002576,"text":"做好香港交通攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:42.576Z"},{"id":1780507011059,"text":"做一点旅游攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:51.059Z"},{"id":1780507749510,"text":"去出入境大厅更新签注","type":"basic","completed":true,"createdAt":"2026-06-03T17:29:09.510Z"}],"habits":{"good":[],"bad":[],"care":[]},"grass":null,"treeGrowth":4},{"date":"2026/6/7","tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"},{"id":1780506828103,"text":"买火车票","type":"basic","completed":true,"createdAt":"2026-06-03T17:13:48.103Z"},{"id":1780506840824,"text":"看完群主攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:00.824Z"},{"id":1780506858184,"text":"准备行李包括充电器转换头充电宝","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:18.184Z"},{"id":1780506881969,"text":"预约复星具体时间","type":"basic","completed":true,"createdAt":"2026-06-03T17:14:41.969Z"},{"id":1780506927767,"text":"查看serenity主页价值消息并按照截图关注另一位博主","type":"study","completed":true,"createdAt":"2026-06-03T17:15:27.767Z"},{"id":1780507002576,"text":"做好香港交通攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:42.576Z"},{"id":1780507011059,"text":"做一点旅游攻略","type":"basic","completed":true,"createdAt":"2026-06-03T17:16:51.059Z"},{"id":1780507749510,"text":"去出入境大厅更新签注","type":"basic","completed":true,"createdAt":"2026-06-03T17:29:09.510Z"}],"habits":{"good":[],"bad":[],"care":[]},"grass":"bad","treeGrowth":4},{"date":"2026/6/3","tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"}],"habits":{"good":[],"bad":[],"care":[]},"grass":"normal","treeGrowth":3},{"date":"2026/6/2","tasks":[{"id":1780375989661,"text":"看经济学原理","type":"study","completed":true,"createdAt":"2026-06-02T04:53:09.661Z"},{"id":1780376029199,"text":"发货","type":"basic","completed":true,"createdAt":"2026-06-02T04:53:49.199Z"},{"id":1780376042355,"text":"吃饭","type":"basic","completed":true,"createdAt":"2026-06-02T04:54:02.355Z"}],"habits":{"good":["拉伸背部滚按摩轴"],"bad":["熬夜"],"care":[]},"grass":"normal","treeGrowth":3}],"apiKey":"","currentStatsPeriod":"year"};
 
         function init() {
+            initLanding();
             loadState();
             renderAll();
             renderMirrorTree();
@@ -2580,26 +2982,40 @@
                     date: todayStr,
                     habits: { good: [...state.habits.good], bad: [...state.habits.bad], care: [...state.habits.care] },
                     grass: state.grass.evaluation,
+                    tasks: state.tasks.filter(t => t.completed).map(t => t.text),
                     isToday: true,
                     reviews: []
                 };
             }
 
-            // 历史打卡数据
-            state.history.forEach(h => {
+            // 已完成任务去重集合（含今日已完成的）
+            const seenTasks = new Set(state.tasks.filter(t => t.completed).map(t => t.text));
+
+            // 历史打卡数据（按日期从旧到新处理，每个任务只归到首次出现的日期）
+            const sortedHistory = [...state.history].sort((a, b) => a.date.localeCompare(b.date));
+            sortedHistory.forEach(h => {
                 if (!dateMap[h.date]) {
-                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
+                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, tasks: [], isToday: false, reviews: [] };
                 }
                 dateMap[h.date].habits.good.push(...(h.habits.good || []));
                 dateMap[h.date].habits.bad.push(...(h.habits.bad || []));
                 dateMap[h.date].habits.care.push(...(h.habits.care || []));
                 if (h.grass) dateMap[h.date].grass = h.grass;
+                // 已完成任务去重：只保留首次出现的任务
+                if (h.tasks) {
+                    h.tasks.forEach(t => {
+                        if (!seenTasks.has(t.text)) {
+                            seenTasks.add(t.text);
+                            dateMap[h.date].tasks.push(t.text);
+                        }
+                    });
+                }
             });
 
             // 复盘文本
             state.reviews.forEach((review, idx) => {
                 if (!dateMap[review.date]) {
-                    dateMap[review.date] = { date: review.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
+                    dateMap[review.date] = { date: review.date, habits: { good: [], bad: [], care: [] }, grass: null, tasks: [], isToday: false, reviews: [] };
                 }
                 dateMap[review.date].reviews.push({ text: review.text, aiSummary: review.aiSummary, idx });
             });
@@ -2642,6 +3058,14 @@
                 if (data.grass) {
                     const emoji = data.grass === 'good' ? '🌱 不错' : data.grass === 'normal' ? '😐 一般' : '😔 有点糟';
                     html += `<div class="day-record-grass">📊 草地自评：${emoji}</div>`;
+                }
+
+                // 已完成任务（小字号）
+                const tasks = [...new Set(data.tasks || [])];
+                if (tasks.length > 0) {
+                    html += `<div style="font-size:0.75rem;color:var(--ink-muted);margin:6px 0 4px;font-family:'Noto Serif SC',serif;">✅ `;
+                    html += tasks.join(' · ');
+                    html += `</div>`;
                 }
 
                 data.reviews.forEach(r => {
