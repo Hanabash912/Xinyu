@@ -2910,12 +2910,19 @@
 
             // 收集有数据/复盘记录的日期
             const hasDataDates = new Set();
-            state.history.forEach(h => hasDataDates.add(h.date));
+            state.history.forEach(h => {
+                const hasData = (h.habits.good && h.habits.good.length > 0) ||
+                                (h.habits.bad && h.habits.bad.length > 0) ||
+                                (h.habits.care && h.habits.care.length > 0) ||
+                                h.grass;
+                if (hasData) hasDataDates.add(h.date);
+            });
             state.reviews.forEach(r => hasDataDates.add(r.date));
             const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
-            if (state.habits.good.length > 0 || state.habits.bad.length > 0 || state.habits.care.length > 0 || state.grass.evaluation) {
-                hasDataDates.add(todayStr);
-            }
+            const todayHasData = state.habits.good.length > 0 || state.habits.bad.length > 0 ||
+                state.habits.care.length > 0 || state.grass.evaluation ||
+                state.tasks.some(t => t.completed);
+            if (todayHasData) hasDataDates.add(todayStr);
 
             const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
             let html = weekdays.map(d => `<div class="review-calendar-day weekday">${d}</div>`).join('');
@@ -3035,15 +3042,19 @@
                 const isToday = dateStr === todayStr;
                 const id = 'record-' + dateStr.replace(/\//g, '-');
 
+                const allGood = [...new Set(data.habits.good || [])];
+                const allBad = [...new Set(data.habits.bad || [])];
+                const allCare = [...new Set(data.habits.care || [])];
+                const tasks = [...new Set(data.tasks || [])];
+
+                // 没任何记录的日期不显示
+                if (allGood.length === 0 && allBad.length === 0 && allCare.length === 0 && !data.grass && tasks.length === 0 && data.reviews.length === 0) return;
+
                 html += `<div class="day-record-card" id="${id}">
                     <div class="day-record-header">
                         <span class="day-record-date">${dateStr}</span>
                         ${isToday ? '<span class="day-record-badge">今天</span>' : ''}
                     </div>`;
-
-                const allGood = [...new Set(data.habits.good || [])];
-                const allBad = [...new Set(data.habits.bad || [])];
-                const allCare = [...new Set(data.habits.care || [])];
 
                 if (allGood.length > 0 || allBad.length > 0 || allCare.length > 0) {
                     html += '<div class="day-record-habits">';
@@ -3058,8 +3069,6 @@
                     html += `<div class="day-record-grass">📊 草地自评：${emoji}</div>`;
                 }
 
-                // 已完成任务（小字号）
-                const tasks = [...new Set(data.tasks || [])];
                 if (tasks.length > 0) {
                     html += `<div style="font-size:0.75rem;color:var(--ink-muted);margin:6px 0 4px;font-family:'Noto Serif SC',serif;line-height:1.5;">✅ `;
                     html += tasks.join(' · ');
