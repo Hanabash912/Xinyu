@@ -2988,10 +2988,8 @@
                 };
             }
 
-            // 已完成任务去重集合（含今日已完成的）
-            const seenTasks = new Set(state.tasks.filter(t => t.completed).map(t => t.text));
-
             // 历史打卡数据（按日期从旧到新处理，每个任务只归到首次出现的日期）
+            const seenTasks = new Set();
             const sortedHistory = [...state.history].sort((a, b) => a.date.localeCompare(b.date));
             sortedHistory.forEach(h => {
                 if (!dateMap[h.date]) {
@@ -3063,7 +3061,7 @@
                 // 已完成任务（小字号）
                 const tasks = [...new Set(data.tasks || [])];
                 if (tasks.length > 0) {
-                    html += `<div style="font-size:0.75rem;color:var(--ink-muted);margin:6px 0 4px;font-family:'Noto Serif SC',serif;">✅ `;
+                    html += `<div style="font-size:0.75rem;color:var(--ink-muted);margin:6px 0 4px;font-family:'Noto Serif SC',serif;line-height:1.5;">✅ `;
                     html += tasks.join(' · ');
                     html += `</div>`;
                 }
