@@ -2371,13 +2371,12 @@
 
             const record = {
                 date: dateStr,
-                tasks: state.tasks.filter(t => t.completed),
                 habits: { ...state.habits },
                 grass: state.grass.evaluation,
                 treeGrowth: state.tree.totalGrowth
             };
 
-            if (record.tasks.length > 0 || record.habits.good.length > 0 ||
+            if (record.habits.good.length > 0 ||
                 record.habits.bad.length > 0 || record.habits.care.length > 0) {
                 state.history.unshift(record);
             }
@@ -2983,44 +2982,35 @@
             const dateMap = {};
 
             // 今日临时数据
+            const todayTasks = state.tasks.filter(t => t.completed).map(t => t.text);
             const hasTodayData = state.habits.good.length > 0 || state.habits.bad.length > 0 || state.habits.care.length > 0 || state.grass.evaluation;
-            if (hasTodayData) {
+            if (hasTodayData || todayTasks.length > 0) {
                 dateMap[todayStr] = {
                     date: todayStr,
                     habits: { good: [...state.habits.good], bad: [...state.habits.bad], care: [...state.habits.care] },
                     grass: state.grass.evaluation,
-                    tasks: state.tasks.filter(t => t.completed).map(t => t.text),
+                    tasks: todayTasks,
                     isToday: true,
                     reviews: []
                 };
             }
 
-            // 历史打卡数据（按日期从旧到新处理，每个任务只归到首次出现的日期）
-            const seenTasks = new Set();
+            // 历史打卡数据
             const sortedHistory = [...state.history].sort((a, b) => a.date.localeCompare(b.date));
             sortedHistory.forEach(h => {
                 if (!dateMap[h.date]) {
-                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, tasks: [], isToday: false, reviews: [] };
+                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
                 }
                 dateMap[h.date].habits.good.push(...(h.habits.good || []));
                 dateMap[h.date].habits.bad.push(...(h.habits.bad || []));
                 dateMap[h.date].habits.care.push(...(h.habits.care || []));
                 if (h.grass) dateMap[h.date].grass = h.grass;
-                // 已完成任务去重：只保留首次出现的任务
-                if (h.tasks) {
-                    h.tasks.forEach(t => {
-                        if (!seenTasks.has(t.text)) {
-                            seenTasks.add(t.text);
-                            dateMap[h.date].tasks.push(t.text);
-                        }
-                    });
-                }
             });
 
             // 复盘文本
             state.reviews.forEach((review, idx) => {
                 if (!dateMap[review.date]) {
-                    dateMap[review.date] = { date: review.date, habits: { good: [], bad: [], care: [] }, grass: null, tasks: [], isToday: false, reviews: [] };
+                    dateMap[review.date] = { date: review.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
                 }
                 dateMap[review.date].reviews.push({ text: review.text, aiSummary: review.aiSummary, idx });
             });
