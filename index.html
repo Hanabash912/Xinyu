@@ -734,23 +734,42 @@
             transform: scale(1.3);
         }
 
-        .quadrant-task-item[draggable="true"] {
-            cursor: grab;
+        .quadrant-badge {
+            cursor: pointer;
         }
 
-        .quadrant-task-item[draggable="true"]:active {
-            cursor: grabbing;
+        /* ===== 四象限选择器弹出菜单 ===== */
+        .quadrant-picker {
+            position: fixed;
+            background: var(--parchment-light);
+            border: 1px solid var(--border-parchment);
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+            z-index: 9999;
+            padding: 6px;
+            min-width: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
-        .quadrant-task-item.dragging {
-            opacity: 0.4;
-            outline: 2px dashed var(--ink-muted);
+        .quadrant-picker-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'Noto Serif SC', serif;
+            transition: background 0.15s;
+            white-space: nowrap;
         }
 
-        .quadrant-cell.drag-over {
-            outline: 2px dashed var(--gold-accent);
-            outline-offset: -2px;
-            background: rgba(212, 175, 55, 0.06) !important;
+        .quadrant-picker-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .quadrant-picker-item.active {
+            background: rgba(0,0,0,0.08);
+            font-weight: 600;
         }
 
         @media (max-width: 380px) {
@@ -2667,7 +2686,7 @@
                 const done = doneByQ[q];
                 const count = pending.length + done.length;
 
-                html += `<div class="quadrant-cell" ondragover="onDragOver(event)" ondrop="onDrop(event, '${q}')" style="background:${cfg.bg};border-color:${cfg.border}">
+                html += `<div class="quadrant-cell" style="background:${cfg.bg};border-color:${cfg.border}">
                     <div class="quadrant-cell-header" style="border-bottom-color:${cfg.border}">
                         <div class="quadrant-cell-title" style="color:${cfg.color}">${cfg.icon} ${cfg.label}</div>
                         <div class="quadrant-cell-count" style="color:${cfg.color}">${count}</div>
@@ -2677,20 +2696,20 @@
                     html += `<div class="quadrant-empty">暂无任务</div>`;
                 } else {
                     pending.forEach(task => {
-                        html += `<div class="quadrant-task-item" draggable="true" ondragstart="onDragStart(event, ${task.id})">
+                        html += `<div class="quadrant-task-item">
                             <span class="task-type" onclick="changeTaskType(${task.id})" style="font-size:1rem">${TASK_TYPES[task.type].icon}</span>
                             <input type="checkbox" class="task-checkbox" onchange="toggleTask(${task.id})">
                             <span class="task-text" style="font-size:0.85rem">${task.text}</span>
-                            <span class="quadrant-badge" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
+                            <span class="quadrant-badge" onclick="showQuadrantPicker(event, ${task.id})" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
                             <button class="task-delete" onclick="deleteTask(${task.id})" style="padding:2px 8px;font-size:0.8rem">×</button>
                         </div>`;
                     });
                     done.forEach(task => {
-                        html += `<div class="quadrant-task-item" draggable="true" ondragstart="onDragStart(event, ${task.id})" style="opacity:0.55">
+                        html += `<div class="quadrant-task-item" style="opacity:0.55">
                             <span class="task-type" onclick="changeTaskType(${task.id})" style="font-size:1rem">${TASK_TYPES[task.type].icon}</span>
                             <input type="checkbox" class="task-checkbox" checked onchange="toggleTask(${task.id})">
                             <span class="task-text completed" style="font-size:0.85rem">${task.text}</span>
-                            <span class="quadrant-badge" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
+                            <span class="quadrant-badge" onclick="showQuadrantPicker(event, ${task.id})" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
                             <button class="task-delete" onclick="deleteTask(${task.id})" style="padding:2px 8px;font-size:0.8rem">×</button>
                         </div>`;
                     });
@@ -2702,42 +2721,59 @@
             container.innerHTML = html;
         }
 
-        // ===== 四象限拖拽 =====
-        let dragTaskId = null;
+        // ===== 四象限选择器 =====
+        let activePicker = null;
 
-        function onDragStart(event, taskId) {
-            dragTaskId = taskId;
-            event.target.classList.add('dragging');
-            event.dataTransfer.effectAllowed = 'move';
+        function showQuadrantPicker(event, taskId) {
+            closeQuadrantPicker();
+
+            const picker = document.createElement('div');
+            picker.className = 'quadrant-picker';
+            picker.onclick = (e) => e.stopPropagation();
+
+            const currentTask = state.tasks.find(t => t.id === taskId);
+            const currentQ = currentTask ? currentTask.quadrant : 'q4';
+
+            const order = ['q1', 'q2', 'q3', 'q4'];
+            order.forEach(q => {
+                const cfg = QUADRANTS[q];
+                const item = document.createElement('div');
+                item.className = 'quadrant-picker-item';
+                if (q === currentQ) item.classList.add('active');
+                item.textContent = `${cfg.icon} ${cfg.label}`;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    const task = state.tasks.find(t => t.id === taskId);
+                    if (task && task.quadrant !== q) {
+                        task.quadrant = q;
+                        saveState();
+                        renderTasks();
+                    }
+                    closeQuadrantPicker();
+                };
+                picker.appendChild(item);
+            });
+
+            document.body.appendChild(picker);
+
+            // 定位在点击的 badge 旁边
+            const rect = event.target.getBoundingClientRect();
+            picker.style.position = 'fixed';
+            picker.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 160)) + 'px';
+            picker.style.top = (rect.bottom + 4) + 'px';
+
+            activePicker = picker;
+
+            // 点击其他地方关闭
+            setTimeout(() => document.addEventListener('click', closeQuadrantPicker, { once: true }), 0);
         }
 
-        function onDragOver(event) {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-            event.currentTarget.classList.add('drag-over');
-        }
-
-        function onDrop(event, quadrant) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('drag-over');
-            document.querySelectorAll('.quadrant-task-item.dragging').forEach(el => el.classList.remove('dragging'));
-
-            if (dragTaskId === null) return;
-            const task = state.tasks.find(t => t.id === dragTaskId);
-            if (task && task.quadrant !== quadrant) {
-                task.quadrant = quadrant;
-                saveState();
-                renderTasks();
+        function closeQuadrantPicker() {
+            if (activePicker) {
+                activePicker.remove();
+                activePicker = null;
             }
-            dragTaskId = null;
         }
-
-        // 拖拽离开时清除高亮
-        document.addEventListener('dragend', () => {
-            dragTaskId = null;
-            document.querySelectorAll('.quadrant-task-item.dragging').forEach(el => el.classList.remove('dragging'));
-            document.querySelectorAll('.quadrant-cell.drag-over').forEach(el => el.classList.remove('drag-over'));
-        });
 
         // ===== 杂草系统 =====
         function addWeed(taskId) {
