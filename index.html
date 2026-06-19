@@ -658,6 +658,88 @@
             font-family: 'Noto Serif SC', serif;
         }
 
+        /* ===== 四象限网格 ===== */
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .quadrant-cell {
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 100px;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .quadrant-cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid;
+        }
+
+        .quadrant-cell-title {
+            font-weight: 600;
+            font-size: 0.8rem;
+            font-family: 'Noto Serif SC', serif;
+            line-height: 1.3;
+        }
+
+        .quadrant-cell-count {
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .quadrant-empty {
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+            text-align: center;
+            padding: 16px 0;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .quadrant-task-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            gap: 6px;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .quadrant-task-item:last-child {
+            border-bottom: none;
+        }
+
+        .quadrant-badge {
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            white-space: nowrap;
+            transition: transform 0.15s;
+            flex-shrink: 0;
+            border: 1px solid;
+            background: transparent;
+        }
+
+        .quadrant-badge:active {
+            transform: scale(1.3);
+        }
+
+        @media (max-width: 380px) {
+            .quadrant-grid { gap: 6px; }
+            .quadrant-cell { padding: 6px; min-height: 80px; }
+            .quadrant-task-item { padding: 4px 0; gap: 4px; }
+        }
+
         /* ===== 习惯模块 ===== */
         .habit-section-title {
             font-size: 1.1rem;
@@ -1990,10 +2072,10 @@
         <!-- 任务输入区 -->
         <div class="card">
             <div class="task-input-row">
-                <input type="text" class="task-input" id="task-input" placeholder="添加任务...">
+                <input type="text" class="task-input" id="task-input" placeholder="添加任务（自动归类）...">
                 <button class="btn btn-primary" onclick="addTask()">+</button>
             </div>
-            <div class="task-list" id="task-list"></div>
+            <div class="quadrant-grid" id="quadrant-grid"></div>
         </div>
 
         <!-- 草地自评 -->
@@ -2240,6 +2322,19 @@
             return () => cancelAnimationFrame(animId);
         }
 
+        // ===== 四象限 =====
+        const QUADRANTS = {
+            q1: { label: '重要且紧急', subtitle: '立即去做', color: '#c0392b', bg: 'rgba(192,57,43,0.06)', border: 'rgba(192,57,43,0.2)', icon: '🔴' },
+            q2: { label: '重要不紧急', subtitle: '计划去做', color: '#27ae60', bg: 'rgba(39,174,96,0.06)', border: 'rgba(39,174,96,0.2)', icon: '🟢' },
+            q3: { label: '不重要但紧急', subtitle: '简化处理', color: '#d68910', bg: 'rgba(214,137,16,0.06)', border: 'rgba(214,137,16,0.2)', icon: '🟡' },
+            q4: { label: '不重要不紧急', subtitle: '尽量避免', color: '#7f8c8d', bg: 'rgba(127,140,141,0.06)', border: 'rgba(127,140,141,0.2)', icon: '⚪' }
+        };
+        const QUADRANT_KEYWORDS = {
+            q1: ['紧急', '截止', 'deadline', 'bug', '危机', '必须', '马上', '立即', '今天', '加急', '急'],
+            q2: ['学习', '读书', '运动', '规划', '成长', '读', '课', '学', '书', '复习', '笔记', '早起', '锻炼', '健身', '冥想', '计划', '练'],
+            q3: ['快递', '取件', '回邮件', '缴费', '买', '取', '通知', '电话', '开会', '回复', '联系', '回', '付', '交']
+        };
+
         // ===== 数据模型 =====
         const TASK_TYPES = {
             basic: { icon: '🌱', name: '基础杂事', keywords: ['快递', '费', '洗', '买', '取', '收拾', '回邮件', '买菜', '缴费', '取件'] },
@@ -2248,6 +2343,18 @@
             free: { icon: '🕊️', name: '自由渴望', keywords: ['画', '散', '写日记', '自由', '想', '散步', '发呆', '画画'] },
             work: { icon: '⚡', name: '工作解决', keywords: ['方案', 'bug', '开会', '客户', '汇报', '工作', '项目', '需求', '报告'] }
         };
+
+        // ===== 凌晨阈值（5AM前视为前一天） =====
+        const LATE_NIGHT_HOUR = 5;
+        function getEffectiveDate() {
+            const now = new Date();
+            if (now.getHours() < LATE_NIGHT_HOUR) {
+                const d = new Date(now);
+                d.setDate(d.getDate() - 1);
+                return d;
+            }
+            return now;
+        }
 
         let state = {
             tasks: [],
@@ -2351,7 +2458,7 @@
         }
 
         function checkNewDay() {
-            const today = new Date().toDateString();
+            const today = getEffectiveDate().toDateString();
             const lastDate = localStorage.getItem('xinyu-last-date');
             if (lastDate !== today) {
                 saveDailyHistory();
@@ -2365,7 +2472,8 @@
         }
 
         function saveDailyHistory() {
-            const yesterday = new Date();
+            const effectiveToday = getEffectiveDate();
+            const yesterday = new Date(effectiveToday);
             yesterday.setDate(yesterday.getDate() - 1);
             const dateStr = yesterday.toLocaleDateString('zh-CN');
 
@@ -2376,8 +2484,18 @@
                 treeGrowth: state.tree.totalGrowth
             };
 
+            // 记录昨日完成的任务
+            const completedTasks = state.tasks.filter(t =>
+                t.completed && t.completedAt &&
+                new Date(t.completedAt).toDateString() === yesterday.toDateString()
+            ).map(t => t.text);
+            if (completedTasks.length > 0) {
+                record.tasks = [...new Set(completedTasks)];
+            }
+
             if (record.habits.good.length > 0 ||
-                record.habits.bad.length > 0 || record.habits.care.length > 0) {
+                record.habits.bad.length > 0 || record.habits.care.length > 0 ||
+                (record.tasks && record.tasks.length > 0)) {
                 state.history.unshift(record);
             }
         }
@@ -2404,6 +2522,16 @@
             return 'basic';
         }
 
+        function classifyQuadrant(text) {
+            const lowerText = text.toLowerCase();
+            for (const [q, keywords] of Object.entries(QUADRANT_KEYWORDS)) {
+                if (keywords.some(kw => lowerText.includes(kw))) {
+                    return q;
+                }
+            }
+            return 'q4';
+        }
+
         function addTask() {
             const input = document.getElementById('task-input');
             const text = input.value.trim();
@@ -2414,6 +2542,7 @@
                 id: Date.now(),
                 text,
                 type,
+                quadrant: classifyQuadrant(text),
                 completed: false,
                 createdAt: new Date().toISOString()
             };
@@ -2474,6 +2603,17 @@
             }
         }
 
+        function changeQuadrant(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                const qs = ['q1', 'q2', 'q3', 'q4'];
+                const cur = qs.indexOf(task.quadrant || 'q4');
+                task.quadrant = qs[(cur + 1) % qs.length];
+                saveState();
+                renderTasks();
+            }
+        }
+
         function deleteTask(id) {
             state.tasks = state.tasks.filter(t => t.id !== id);
             removeWeed(id);
@@ -2483,50 +2623,64 @@
         }
 
         function renderTasks() {
-            const list = document.getElementById('task-list');
-            const today = new Date().toDateString();
+            const container = document.getElementById('quadrant-grid');
+            if (!container) return;
+            const effectiveToday = getEffectiveDate();
 
-            // 未完成的任务：全部显示，不随日期消失
-            const pendingTasks = state.tasks.filter(t => !t.completed);
-            // 今日已完成的任务（让你看到今天完成了什么）
-            const todayDoneTasks = state.tasks.filter(t =>
-                t.completed && new Date(t.createdAt).toDateString() === today
-            );
+            // 按象限分组
+            const pendingByQ = { q1: [], q2: [], q3: [], q4: [] };
+            const doneByQ = { q1: [], q2: [], q3: [], q4: [] };
 
-            let html = '';
-
-            if (pendingTasks.length > 0) {
-                html += `<div style="font-size:0.8rem;color:var(--ink-muted);margin-bottom:6px;font-family:'Noto Serif SC',serif;">待完成</div>`;
-                html += pendingTasks.map(task => `
-                    <div class="task-item">
-                        <span class="task-type" onclick="changeTaskType(${task.id})">${TASK_TYPES[task.type].icon}</span>
-                        <input type="checkbox" class="task-checkbox" onchange="toggleTask(${task.id})">
-                        <span class="task-text">${task.text}</span>
-                        <button class="task-delete" onclick="deleteTask(${task.id})">×</button>
-                    </div>
-                `).join('');
-            }
-
-            if (todayDoneTasks.length > 0) {
-                if (pendingTasks.length > 0) {
-                    html += `<div style="border-top:1px dashed var(--border-parchment);margin:10px 0;"></div>`;
+            state.tasks.forEach(t => {
+                const q = t.quadrant || 'q4';
+                if (!t.completed) {
+                    pendingByQ[q].push(t);
+                } else if (t.completedAt && new Date(t.completedAt).toDateString() === effectiveToday.toDateString()) {
+                    doneByQ[q].push(t);
                 }
-                html += `<div style="font-size:0.8rem;color:var(--ink-muted);margin-bottom:6px;font-family:'Noto Serif SC',serif;">今日完成</div>`;
-                html += todayDoneTasks.map(task => `
-                    <div class="task-item">
-                        <span class="task-type" onclick="changeTaskType(${task.id})">${TASK_TYPES[task.type].icon}</span>
-                        <input type="checkbox" class="task-checkbox" checked onchange="toggleTask(${task.id})">
-                        <span class="task-text completed">${task.text}</span>
-                        <button class="task-delete" onclick="deleteTask(${task.id})">×</button>
-                    </div>
-                `).join('');
-            }
+            });
 
-            if (!html) {
-                html = '<div style="color:var(--ink-muted);text-align:center;padding:20px 0;font-family:\'Noto Serif SC\',serif;">暂无任务</div>';
-            }
+            const order = ['q1', 'q2', 'q3', 'q4'];
+            let html = '';
+            order.forEach(q => {
+                const cfg = QUADRANTS[q];
+                const pending = pendingByQ[q];
+                const done = doneByQ[q];
+                const count = pending.length + done.length;
 
-            list.innerHTML = html;
+                html += `<div class="quadrant-cell" style="background:${cfg.bg};border-color:${cfg.border}">
+                    <div class="quadrant-cell-header" style="border-bottom-color:${cfg.border}">
+                        <div class="quadrant-cell-title" style="color:${cfg.color}">${cfg.icon} ${cfg.label}</div>
+                        <div class="quadrant-cell-count" style="color:${cfg.color}">${count}</div>
+                    </div>`;
+
+                if (pending.length === 0 && done.length === 0) {
+                    html += `<div class="quadrant-empty">暂无任务</div>`;
+                } else {
+                    pending.forEach(task => {
+                        html += `<div class="quadrant-task-item">
+                            <span class="task-type" onclick="changeTaskType(${task.id})" style="font-size:1rem">${TASK_TYPES[task.type].icon}</span>
+                            <input type="checkbox" class="task-checkbox" onchange="toggleTask(${task.id})">
+                            <span class="task-text" style="font-size:0.85rem">${task.text}</span>
+                            <span class="quadrant-badge" onclick="changeQuadrant(${task.id})" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
+                            <button class="task-delete" onclick="deleteTask(${task.id})" style="padding:2px 8px;font-size:0.8rem">×</button>
+                        </div>`;
+                    });
+                    done.forEach(task => {
+                        html += `<div class="quadrant-task-item" style="opacity:0.55">
+                            <span class="task-type" onclick="changeTaskType(${task.id})" style="font-size:1rem">${TASK_TYPES[task.type].icon}</span>
+                            <input type="checkbox" class="task-checkbox" checked onchange="toggleTask(${task.id})">
+                            <span class="task-text completed" style="font-size:0.85rem">${task.text}</span>
+                            <span class="quadrant-badge" onclick="changeQuadrant(${task.id})" style="color:${cfg.color};border-color:${cfg.border}">${cfg.icon}</span>
+                            <button class="task-delete" onclick="deleteTask(${task.id})" style="padding:2px 8px;font-size:0.8rem">×</button>
+                        </div>`;
+                    });
+                }
+
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         // ===== 杂草系统 =====
@@ -2906,15 +3060,14 @@
 
             const firstDay = new Date(year, month - 1, 1).getDay();
             const daysInMonth = new Date(year, month, 0).getDate();
-            const today = new Date();
-
+            const today = getEffectiveDate();
             // 收集有数据/复盘记录的日期
             const hasDataDates = new Set();
             state.history.forEach(h => {
                 const hasData = (h.habits.good && h.habits.good.length > 0) ||
                                 (h.habits.bad && h.habits.bad.length > 0) ||
                                 (h.habits.care && h.habits.care.length > 0) ||
-                                h.grass;
+                                h.grass || (h.tasks && h.tasks.length > 0);
                 if (hasData) hasDataDates.add(h.date);
             });
             state.reviews.forEach(r => hasDataDates.add(r.date));
@@ -2976,7 +3129,7 @@
             const container = document.getElementById('merged-records');
             if (!container) return;
 
-            const today = new Date();
+            const today = getEffectiveDate();
             const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
 
             // 按日期合并所有数据
@@ -2986,7 +3139,7 @@
             const todayTasks = state.tasks.filter(t => {
                 if (!t.completed) return false;
                 if (t.completedAt) {
-                    return new Date(t.completedAt).toDateString() === new Date().toDateString();
+                    return new Date(t.completedAt).toDateString() === getEffectiveDate().toDateString();
                 }
                 return false;
             }).map(t => t.text);
@@ -3006,12 +3159,16 @@
             const sortedHistory = [...state.history].sort((a, b) => a.date.localeCompare(b.date));
             sortedHistory.forEach(h => {
                 if (!dateMap[h.date]) {
-                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [] };
+                    dateMap[h.date] = { date: h.date, habits: { good: [], bad: [], care: [] }, grass: null, isToday: false, reviews: [], tasks: [] };
                 }
                 dateMap[h.date].habits.good.push(...(h.habits.good || []));
                 dateMap[h.date].habits.bad.push(...(h.habits.bad || []));
                 dateMap[h.date].habits.care.push(...(h.habits.care || []));
                 if (h.grass) dateMap[h.date].grass = h.grass;
+                if (h.tasks && h.tasks.length > 0) {
+                    const taskTexts = h.tasks.map(t => typeof t === 'string' ? t : t.text);
+                    dateMap[h.date].tasks.push(...taskTexts);
+                }
             });
 
             // 复盘文本
@@ -3225,7 +3382,7 @@
             if (!text) return;
 
             const review = {
-                date: new Date().toLocaleDateString('zh-CN'),
+                date: getEffectiveDate().toLocaleDateString('zh-CN'),
                 text,
                 aiSummary: document.getElementById('ai-summary').textContent
             };
@@ -3346,7 +3503,7 @@
         // ===== 历史记录 =====
         // ===== 习惯统计 - 柱状图 =====
         function getHabitCounts(dateStr) {
-            const today = new Date();
+            const today = getEffectiveDate();
             const todayStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
             if (dateStr === todayStr) {
                 return { good: state.habits.good.length, bad: state.habits.bad.length };
@@ -3369,7 +3526,7 @@
             const container = document.getElementById('habit-chart');
             if (!container) return;
 
-            const today = new Date();
+            const today = getEffectiveDate();
             let entries = [];
             let maxVal = 0;
 
